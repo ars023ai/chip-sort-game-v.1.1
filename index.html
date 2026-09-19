@@ -1,33 +1,459 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d8b58b"><title>Cap Stack Sort</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e5c49d">
+<meta name="description" content="Cap Stack Sort: a tactile bottle-cap sorting puzzle. Place, combine, and clear. A complete offline Canvas game.">
+<title>Cap Stack Sort</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;height:100%;overflow:hidden;touch-action:none}body{display:grid;place-items:center;background:#b78d64;font-family:Arial,sans-serif;user-select:none}.game{position:relative;width:min(100vw,calc(100svh*9/16));height:min(100svh,calc(100vw*16/9));overflow:hidden;background:linear-gradient(135deg,#d8b58b,#c89d70 45%,#dfc29b);box-shadow:0 20px 70px #0005}.game:before{content:"";position:absolute;inset:0;opacity:.18;background:repeating-linear-gradient(92deg,#fff0 0 48px,#6d452522 49px,#fff0 52px 104px)}canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}.hud{position:absolute;z-index:2;left:4%;right:4%;top:2.2%;display:flex;align-items:stretch;gap:2%;pointer-events:none}.logo{width:28%;font-weight:1000;font-size:clamp(18px,7cqw,34px);line-height:.78;color:#fff;text-shadow:0 4px 0 #153d75,0 7px 12px #0005;transform:rotate(-4deg)}.logo b{display:block;color:#ffd12d}.stats{flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;background:#363636e8;color:#fff;border:2px solid #ffffff55;border-radius:12px;box-shadow:0 5px 14px #0003;overflow:hidden}.stat{display:grid;place-items:center;padding:4px;border-right:1px solid #ffffff55}.stat:last-child{border:0}.stat small{font-weight:800;color:#d7d7d7;font-size:clamp(8px,2.5cqw,13px)}.stat strong{font-size:clamp(15px,5cqw,27px);color:#ffd42c}.gear{position:absolute;z-index:3;right:3%;top:10.5%;width:10%;aspect-ratio:1;border:2px solid #ffffff99;border-radius:12px;background:#3c3c3ce8;color:white;font-size:6cqw;display:grid;place-items:center;box-shadow:0 4px 10px #0004}.tag{position:absolute;z-index:2;left:4%;top:13%;font-weight:900;font-size:2.5cqw;color:#493b30}.traylabel{position:absolute;z-index:2;right:4%;bottom:3.5%;font-weight:900;font-size:2.5cqw;color:#594536;text-align:center;pointer-events:none}.toast{position:absolute;z-index:5;left:50%;top:42%;transform:translate(-50%,-50%) scale(.7);opacity:0;color:white;font-weight:1000;font-size:9cqw;text-shadow:0 4px 0 #6d381c,0 8px 20px #0007;pointer-events:none}.toast.show{animation:toast .9s ease-out}.combo{color:#ffd632}.overlay{position:absolute;z-index:10;inset:0;display:none;place-items:center;background:#3c2b20cc;backdrop-filter:blur(5px);padding:8%}.overlay.show{display:grid}.card{width:100%;background:#f3e3cd;border-radius:22px;padding:8%;text-align:center;color:#493728;box-shadow:0 15px 50px #0005}.card h2{font-size:9cqw;margin:0 0 3%}.card button{border:0;background:#2f6d3e;color:white;font-weight:900;font-size:4cqw;padding:4% 9%;border-radius:14px}.hint{position:absolute;z-index:2;left:5%;bottom:2.5%;font-size:2.3cqw;font-weight:800;color:#5c4939;pointer-events:none}@keyframes toast{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.16)}45%{transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%) scale(.92)}}
-</style></head><body><main class="game" id="game"><canvas id="c" width="900" height="1600"></canvas><div class="hud"><div class="logo">CAP<b>STACK</b><span style="font-size:.62em">SORT</span></div><div class="stats"><div class="stat"><small>SCORE</small><strong id="score">0</strong></div><div class="stat"><small>BEST</small><strong id="best">0</strong></div><div class="stat"><small>COMBO</small><strong id="combo">—</strong></div></div></div><button class="gear" id="sound">♫</button><div class="tag">SAME CAPS. BIGGER COMBOS.</div><div class="hint">DRAG A STACK • OR TAP, THEN TAP A SLOT</div><div class="traylabel">NEXT STACKS<br>DRAG OR TAP</div><div class="toast" id="toast"></div><div class="overlay" id="over"><div class="card"><h2>Nice run!</h2><p id="final"></p><button id="again">PLAY AGAIN</button></div></div></main>
+:root{color-scheme:dark;--ink:#f6f0e8;--muted:#99928a;--gold:#f9bc68;--panel:#242120;--line:#3a3430}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;overscroll-behavior:none}body{background:#151516;color:var(--ink);font-family:Arial,Helvetica,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100svh;padding:16px;user-select:none;-webkit-user-select:none;background-image:radial-gradient(ellipse at 50% 35%,#30272066,transparent 65%)}button{font:inherit;cursor:pointer;color:inherit;touch-action:manipulation}button:focus-visible{outline:2px solid var(--gold);outline-offset:5px}button:disabled{opacity:.35;cursor:default}.shell{width:min(450px,calc((100svh - 32px)*.5625));position:relative}.game{position:relative;width:100%;aspect-ratio:9/16;overflow:hidden;container-type:inline-size;border:1px solid #49403a;background:#1b1919;border-radius:28px;box-shadow:0 24px 90px #0006,0 1px 0 #ffffff0c inset}canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none;outline:none}.header{position:absolute;left:6.2%;right:6.2%;top:4.1%;pointer-events:none}.eyebrow{display:flex;align-items:center;gap:7px;color:#bdad9b;letter-spacing:.22em;font-size:2.1cqw;font-weight:700}.eyebrow .dot{height:5px;width:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px #f9bc6840}.topline{display:flex;justify-content:space-between;align-items:center;margin-top:3.7cqw}.title{margin:0;font-size:8.1cqw;line-height:.98;letter-spacing:-.065em;font-weight:900}.title span{display:block;color:var(--gold);font-size:5.2cqw;letter-spacing:.025em;margin-top:1.3cqw}.score{min-width:26cqw;border:1px solid #514235;border-radius:3.2cqw;background:linear-gradient(145deg,#382d23,#2a2520);padding:2.2cqw 3.2cqw;text-align:right;position:relative}.score-label{font-size:1.9cqw;color:#c4ae94;font-weight:700;letter-spacing:.17em;display:flex;align-items:center;justify-content:flex-end;gap:1.5cqw}.score-value{font-size:7.5cqw;line-height:1.15;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.score.bump{animation:score-bump .35s ease}.stats{display:flex;align-items:center;justify-content:space-between;margin-top:4.4cqw;font-size:2.5cqw;color:#a69b90}.stats strong{font-weight:400;color:#e3d7c9}.stats .tiny{color:var(--gold);margin-right:1cqw}.board-caption{position:absolute;left:7%;right:7%;top:72.1%;display:flex;align-items:center;justify-content:space-between;font-size:2.25cqw;color:#b8aa9b;letter-spacing:.01em;pointer-events:none}.board-caption b{font-weight:400;color:#ebbd83}.legend{display:flex;gap:1.1cqw}.legend i{display:block;width:1.8cqw;height:1.8cqw;border-radius:50%;box-shadow:0 1px 3px #0005}.tray-heading{position:absolute;left:7%;right:7%;top:77.2%;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.tray-heading strong{font-size:2.15cqw;letter-spacing:.18em}.tray-heading span{font-size:2.1cqw;color:#9d9187}.footer{position:absolute;left:6.6%;right:6.6%;bottom:2.15%;display:flex;justify-content:space-between;align-items:center;gap:2cqw}.controls{display:flex;gap:1.5cqw}.icon-button{border:1px solid #463d36;background:#2b2521;width:8cqw;height:8cqw;border-radius:50%;padding:2cqw;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .15s}.icon-button:hover{background:#423327}.icon-button:active{transform:scale(.92)}svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}.footer-note{font-size:2.05cqw;letter-spacing:.02em;color:#aa9d90;text-align:center;line-height:1.6}.footer-note strong{font-weight:400;color:#d6c2aa}.outside{position:absolute;top:calc(100% + 8px);width:100%;text-align:center;font-size:9px;color:#6f6862;letter-spacing:.13em}.overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:7%;background:#121010ce;backdrop-filter:blur(9px)}.overlay[hidden]{display:none}.modal{width:100%;border:1px solid #5a4637;background:linear-gradient(150deg,#30271f,#201d1c);border-radius:5cqw;padding:6cqw;box-shadow:0 15px 60px #0007;animation:enter .22s ease}.modal-eyebrow{font-size:2.1cqw;color:var(--gold);letter-spacing:.19em;font-weight:700}.modal h2{margin:2.5cqw 0 3cqw;font-size:7.8cqw;line-height:1.07;letter-spacing:-.045em}.modal p{font-size:3cqw;color:#bfb2a5;line-height:1.65;margin:3cqw 0}.modal strong{color:#f0dfcd}.steps{padding:0;margin:4cqw 0;list-style:none;counter-reset:step}.steps li{font-size:2.7cqw;line-height:1.6;color:#c8b9a8;padding:2cqw 0 2cqw 8cqw;position:relative;counter-increment:step}.steps li::before{content:counter(step);position:absolute;left:0;top:2cqw;background:#483628;color:var(--gold);border:1px solid #6a4c33;border-radius:50%;width:5cqw;height:5cqw;display:grid;place-items:center;font-size:2.4cqw;font-weight:bold}.primary{width:100%;margin-top:3cqw;border:0;border-radius:2.5cqw;padding:3.5cqw;font-size:3cqw;font-weight:700;letter-spacing:.03em;color:#332315;background:linear-gradient(#ffcf87,#efae54);box-shadow:0 3px 0 #97622f;transition:filter .15s,transform .15s}.primary:hover{filter:brightness(1.08)}.primary:active{transform:translateY(2px);box-shadow:0 1px 0 #97622f}.secondary{width:100%;padding:3cqw;margin-top:2cqw;font-size:2.7cqw;background:none;border:1px solid #574739;border-radius:2.5cqw;color:#cbb9a6}.result{border:1px solid #4b3c2e;background:#1d1a18;border-radius:3cqw;text-align:center;padding:4cqw;margin:4cqw 0}.result-label{font-size:2cqw;color:#bc9f7e;letter-spacing:.18em}.result-score{font-size:14cqw;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums}.result-best{font-size:2.5cqw;color:#b8a28a}.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@keyframes enter{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}@keyframes score-bump{50%{transform:scale(1.08);border-color:#f9bc68}}
+@media(min-width:700px){body{padding:28px}.shell{width:min(450px,calc((100svh - 56px)*.5625))}}@media(max-width:480px){body{padding:0}.shell{width:min(100vw,calc(100svh * .5625))}.game{border-radius:0;border-left:0;border-right:0}.outside{display:none}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* Warm table rendering; container units always resolve to the game. */
+:root{color-scheme:light}body{background:#bc9973;background-image:radial-gradient(ellipse at 50% 35%,#f5dec0,transparent 75%)}.game{border-color:#ead2b0;background:#e5c49d;box-shadow:0 24px 90px #59371e40}.outside{color:#735b43}.eyebrow{color:#80634b}.eyebrow .dot{background:#427267}.title{color:#244b43;font-size:8cqw}.title span{color:#9a6537;font-size:4.3cqw;letter-spacing:.15em}.score{background:#f7efdf;border-color:#fff8e9;box-shadow:0 4px 10px #77502b18;color:#284e44}.score-label{color:#8b755d}.stats{color:#755e48}.stats strong{color:#284e44;font-weight:700}.board-caption{color:#796148}.board-caption b{color:#315b4c}.tray-heading{color:#3a5148}.tray-heading span{color:#725d49}.footer-note{color:#79624e}.footer-note strong{color:#3a574b}.icon-button{background:#f0e2cc;border-color:#c7ae8b;color:#3e594d}.icon-button:hover{background:#fff2dd}.footer{bottom:2%}.legend{display:none}
+</style>
+</head>
+<body>
+<main class="shell">
+<section class="game" id="game" aria-label="Cap Stack Sort puzzle game">
+<canvas id="canvas" width="900" height="1600" tabindex="0" aria-label="Game board. Select a tray stack with keys 1, 2, or 3, use arrow keys to choose a grid slot, then press Enter to place. Press Escape to deselect." aria-describedby="keyboard-help">Your browser needs HTML5 Canvas to play Cap Stack Sort.</canvas>
+<header class="header">
+<div class="eyebrow"><span class="dot"></span> BOTTLED JOY · NO RUSH</div>
+<div class="topline"><h1 class="title">CAP<span>STACK SORT</span></h1><div class="score" id="score-card"><div class="score-label"><span aria-hidden="true">✦</span> SCORE</div><div class="score-value" id="score">0</div></div></div>
+<div class="stats"><span><span class="tiny" aria-hidden="true">♜</span> BEST <strong id="best">0</strong></span><span>COMBO <strong id="combo">—</strong></span><span>TIME <strong id="time">0:00</strong></span><span hidden><strong id="open-count">30</strong></span></div>
+</header>
+<div class="board-caption"><span><b>10+ matching tops clear</b> · 10 pts / cap</span><span class="legend" aria-label="Six chip brands"><i style="background:#3779ed"></i><i style="background:#ef4d5c"></i><i style="background:#ff951c"></i><i style="background:#31c1c0"></i><i style="background:#8a59d1"></i><i style="background:#c9e747"></i></span></div>
+<div class="tray-heading"><strong>NEXT STACKS</strong><span id="tray-status">3 stacks to play</span></div>
+<footer class="footer"><div class="controls"><button class="icon-button" id="sound-btn" aria-label="Turn sound on" aria-pressed="false" title="Sound on/off"><svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4z"/><path id="sound-waves" d="m16 9 6 6m0-6-6 6"/></svg></button><button class="icon-button" id="help-btn" aria-label="How to play" title="How to play"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .4c0 1.8-2.5 1.8-2.5 3.6M12 16h.01"/></svg></button></div><div class="footer-note" id="hint">A little order. A lot of satisfaction.<br><strong>DRAG OR TAP · MATCH THE TOPS</strong></div><button class="icon-button" id="restart-btn" aria-label="Restart game" title="Restart game"><svg viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></svg></button></footer>
+<div id="overlay" class="overlay" hidden><div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></div></div>
+<div class="sr-only" id="keyboard-help">Press 1, 2, or 3 to select a tray stack. Arrow keys move the grid cursor. Enter or Space places a stack in an empty slot. Escape cancels. H opens instructions, M toggles sound, and R restarts with confirmation.</div><div class="sr-only" id="live" aria-live="polite" aria-atomic="true"></div>
+</section><div class="outside">NO RUSH. JUST ONE MORE STACK.</div>
+</main>
 <script>
 'use strict';
-const C=document.getElementById('c'),X=C.getContext('2d'),scoreEl=document.getElementById('score'),bestEl=document.getElementById('best'),comboEl=document.getElementById('combo'),toast=document.getElementById('toast'),over=document.getElementById('over');
-const W=900,H=1600,COLS=5,ROWS=6,THRESH=10;const TYPES=[{n:'COLA',b:'#df2d27',l:'#ff6a4f',d:'#8e1717'},{n:'FANTA',b:'#ff7b13',l:'#ffb43a',d:'#b44709'},{n:'7UP',b:'#1e9a4a',l:'#56c86d',d:'#09612d'},{n:'PEP',b:'#1658c7',l:'#4d8cff',d:'#08357e'},{n:'LEMON',b:'#f1c91e',l:'#ffe65b',d:'#a98200'},{n:'GRAPE',b:'#7b43b7',l:'#b276e9',d:'#4b2474'}];
-let board,tray,score,best=+(localStorage.getItem('cap-best')||0),selected=null,drag=null,busy=false,started=0,soundOn=localStorage.getItem('cap-sound')!=='0',particles=[],rings=[],shake=0,flash=0,hover=-1,lastTray='';bestEl.textContent=best;
-const bx=105,by=255,cw=138,ch=145,gap=13,boardW=COLS*cw+(COLS-1)*gap,boardH=ROWS*ch+(ROWS-1)*gap,ty=1355;
-function top(s){return s?.length?s[s.length-1]:-1}function run(s){if(!s?.length)return 0;let t=top(s),i=s.length-1;while(i>=0&&s[i]===t)i--;return s.length-1-i}function neigh(i){let x=i%5,y=(i/5)|0,a=[];if(y)a.push(i-5);if(x)a.push(i-1);if(x<4)a.push(i+1);if(y<5)a.push(i+5);return a}function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-class AudioFX{constructor(){this.ctx=null}on(){if(!soundOn)return false;this.ctx??=new (window.AudioContext||window.webkitAudioContext)();this.ctx.resume();return true}tone(f,d=.08,type='sine',v=.05,delay=0){if(!this.on())return;let a=this.ctx,o=a.createOscillator(),g=a.createGain(),t=a.currentTime+delay;o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(a.destination);o.start(t);o.stop(t+d)}pick(){this.tone(430,.05,'triangle',.035)}place(){this.tone(150,.07,'sine',.06);this.tone(250,.05,'triangle',.03,.03)}merge(n=1){for(let i=0;i<Math.min(n,5);i++)this.tone(330+i*55,.08,'triangle',.035,i*.025)}clear(combo){this.tone(160,.16,'sawtooth',.04);this.tone(520+combo*45,.25,'triangle',.07,.04);this.tone(780+combo*65,.3,'sine',.05,.09)}}const A=new AudioFX;
-function activeColors(){let set=[];for(let s of board)if(s.length&&!set.includes(top(s)))set.push(top(s));return set}
-function makeTray(){let easy=(performance.now()-started)<180000,active=activeColors(),out=[];for(let k=0;k<3;k++){let n=easy?3+((Math.random()*3)|0):2+((Math.random()*3)|0);let t=(easy&&active.length&&Math.random()<.72)?active[(Math.random()*active.length)|0]:(Math.random()*TYPES.length)|0;let s=Array(n).fill(t);let mixChance=easy?.18:.38;if(n>=4&&Math.random()<mixChance){let under=(t+1+((Math.random()*(TYPES.length-1))|0))%TYPES.length;let underN=1+((Math.random()*Math.min(2,n-2))|0);for(let i=0;i<underN;i++)s[i]=under}out.push(s)}let sig=out.map(s=>s.join('')).join('|');if(sig===lastTray)return makeTray();lastTray=sig;return out}
-function reset(){board=Array.from({length:30},()=>[]);score=0;selected=null;drag=null;busy=false;started=performance.now();lastTray='';tray=makeTray();particles=[];rings=[];shake=0;over.classList.remove('show');updateUI()}
-function updateUI(combo=0){scoreEl.textContent=score.toLocaleString();bestEl.textContent=best.toLocaleString();comboEl.textContent=combo>1?'x'+combo:'—'}
-function slotPos(i){return{x:bx+(i%5)*(cw+gap),y:by+((i/5)|0)*(ch+gap)}}function trayPos(i){return{x:205+i*245,y:ty}}
-function rr(x,y,w,h,r){X.beginPath();X.roundRect(x,y,w,h,r)}
-function cap(x,y,r,t,alpha=1){let q=TYPES[t];X.save();X.globalAlpha=alpha;X.shadowColor='#0006';X.shadowBlur=10;X.shadowOffsetY=6;let grad=X.createRadialGradient(x-r*.28,y-r*.35,r*.08,x,y,r);grad.addColorStop(0,q.l);grad.addColorStop(.6,q.b);grad.addColorStop(1,q.d);X.fillStyle=grad;X.beginPath();for(let i=0;i<32;i++){let a=i*Math.PI/16,rad=r*(i%2?1:.92),px=x+Math.cos(a)*rad,py=y+Math.sin(a)*rad;if(i)X.lineTo(px,py);else X.moveTo(px,py)}X.closePath();X.fill();X.shadowColor='transparent';X.strokeStyle='#ffffff55';X.lineWidth=3;X.stroke();X.beginPath();X.arc(x,y,r*.72,0,Math.PI*2);X.strokeStyle='#ffffff35';X.lineWidth=4;X.stroke();X.fillStyle='white';X.textAlign='center';X.textBaseline='middle';X.font=`900 ${r*.34}px Arial`;X.shadowColor='#0007';X.shadowBlur=3;X.fillText(q.n,x,y+2);X.restore()}
-function drawStack(s,x,y,scale=1,ghost=false){if(!s?.length)return;let r=49*scale,shown=Math.min(s.length,7),start=s.length-shown;for(let j=0;j<shown;j++){let idx=start+j,off=(shown-1-j)*8*scale;cap(x+off*.22,y+off,r,s[idx],ghost?.72:1)}let n=s.length;if(n>1){X.save();X.fillStyle='#2b2928dd';X.strokeStyle='#fff8';X.lineWidth=2;X.beginPath();X.arc(x+r*.65,y-r*.65,18*scale,0,Math.PI*2);X.fill();X.stroke();X.fillStyle='#fff';X.font=`800 ${19*scale}px Arial`;X.textAlign='center';X.textBaseline='middle';X.fillText(n,x+r*.65,y-r*.65+1);X.restore()}}
-function render(){X.clearRect(0,0,W,H);X.save();if(shake){X.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);shake*=.86;if(shake<.5)shake=0}X.fillStyle='#ead9c2';X.shadowColor='#5f402955';X.shadowBlur=25;X.shadowOffsetY=12;rr(bx-24,by-28,boardW+48,boardH+55,28);X.fill();X.shadowColor='transparent';for(let i=0;i<30;i++){let p=slotPos(i);X.fillStyle=i===hover&&!board[i].length?'#fff4d7':'#ddcbb5';rr(p.x,p.y,cw,ch,18);X.fill();X.strokeStyle='#b9a58f';X.lineWidth=3;X.stroke();if(board[i].length)drawStack(board[i],p.x+cw/2,p.y+ch/2-5,.92)}X.fillStyle='#303133';X.shadowColor='#0006';X.shadowBlur=18;rr(145,1295,650,205,28);X.fill();X.shadowColor='transparent';X.strokeStyle='#b8aa98';X.lineWidth=8;X.stroke();for(let i=0;i<3;i++){if(tray[i]&&!(drag&&drag.i===i)){let p=trayPos(i);drawStack(tray[i],p.x,p.y,1,selected===i)}}if(drag)drawStack(tray[drag.i],drag.x,drag.y,1.08,true);for(let p of particles){X.globalAlpha=Math.max(0,p.life);X.fillStyle=TYPES[p.t].l;X.beginPath();X.arc(p.x,p.y,p.r,0,Math.PI*2);X.fill();p.x+=p.vx;p.y+=p.vy;p.vy+=.35;p.life-=.025}particles=particles.filter(p=>p.life>0);for(let r of rings){X.globalAlpha=r.life;X.strokeStyle=TYPES[r.t].l;X.lineWidth=8*r.life;X.beginPath();X.arc(r.x,r.y,r.rad,0,Math.PI*2);X.stroke();r.rad+=7;r.life-=.045}rings=rings.filter(r=>r.life>0);X.restore();if(flash>0){X.fillStyle=`rgba(255,245,210,${flash})`;X.fillRect(0,0,W,H);flash*=.72}requestAnimationFrame(render)}
-function burst(i,t,count=24){let p=slotPos(i),x=p.x+cw/2,y=p.y+ch/2;for(let k=0;k<count;k++){let a=Math.random()*Math.PI*2,s=3+Math.random()*9;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-3,r:3+Math.random()*6,life:1,t})}rings.push({x,y,rad:35,life:1,t});shake=Math.max(shake,15);flash=.22}
-function showToast(text,combo=false){toast.textContent=text;toast.className='toast '+(combo?'combo ':'')+'show';void toast.offsetWidth;setTimeout(()=>toast.classList.remove('show'),900)}
-async function resolve(start){busy=true;let queue=[start],combo=0;while(queue.length){let target=queue.shift();if(!board[target].length)continue;let changed=true;while(changed&&board[target].length){changed=false;for(let src of neigh(target)){if(!board[src].length||top(board[src])!==top(board[target]))continue;let n=run(board[src]),moved=board[src].splice(board[src].length-n,n);A.merge(n);await sleep(90);board[target].push(...moved);changed=true;if(board[src].length)queue.push(src)}let n=run(board[target]);if(n>=THRESH){let t=top(board[target]);combo++;await sleep(110);board[target].splice(board[target].length-n,n);let base=n*10,bonus=combo>1?Math.round(base*(combo-1)*.25):0;score+=base+bonus;if(score>best){best=score;localStorage.setItem('cap-best',best)}updateUI(combo);A.clear(combo);burst(target,t,24+Math.min(n,15));showToast(combo>1?`COMBO x${combo}  +${base+bonus}`:`CLEAR ${n}  +${base}`,combo>1);await sleep(480);if(board[target].length){queue.push(target);changed=true}}}}
-updateUI(combo);busy=false;if(board.every(s=>s.length)){document.getElementById('final').textContent=`Score: ${score.toLocaleString()} • Best: ${best.toLocaleString()}`;over.classList.add('show')}}
-async function place(ti,si){if(busy||!tray[ti]||board[si].length)return;board[si]=tray[ti].slice();tray[ti]=null;selected=null;A.place();await sleep(100);await resolve(si);if(tray.every(x=>!x))tray=makeTray()}
-function point(e){let r=C.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}function trayHit(p){for(let i=0;i<3;i++){let q=trayPos(i);if(tray[i]&&Math.hypot(p.x-q.x,p.y-q.y)<80)return i}return-1}function slotHit(p){for(let i=0;i<30;i++){let q=slotPos(i);if(p.x>=q.x&&p.x<=q.x+cw&&p.y>=q.y&&p.y<=q.y+ch)return i}return-1}
-C.addEventListener('pointerdown',e=>{if(busy)return;let p=point(e),i=trayHit(p);if(i>=0){A.pick();selected=i;drag={i,x:p.x,y:p.y,startX:p.x,startY:p.y,moved:false,id:e.pointerId};C.setPointerCapture?.(e.pointerId);e.preventDefault();return}let s=slotHit(p);if(selected!==null&&s>=0&&!board[s].length)place(selected,s)});
-C.addEventListener('pointermove',e=>{if(!drag)return;let p=point(e);drag.x=p.x;drag.y=p.y;if(Math.hypot(p.x-drag.startX,p.y-drag.startY)>12)drag.moved=true;let s=slotHit(p);hover=s>=0&&!board[s].length?s:-1;e.preventDefault()});
-C.addEventListener('pointerup',e=>{if(!drag)return;let p=point(e),d=drag,s=slotHit(p);drag=null;hover=-1;try{C.releasePointerCapture?.(e.pointerId)}catch{}if(d.moved&&s>=0&&!board[s].length)place(d.i,s);else selected=d.i;e.preventDefault()});C.addEventListener('pointercancel',()=>{drag=null;hover=-1});
-document.getElementById('sound').onclick=()=>{soundOn=!soundOn;localStorage.setItem('cap-sound',soundOn?'1':'0');document.getElementById('sound').textContent=soundOn?'♫':'×'};document.getElementById('again').onclick=reset;reset();render();
-</script></body></html>
+/* CAP STACK SORT — no dependencies, network requests, or external assets.
+   Stack arrays are bottom-to-top. The rule engine is kept independent of
+   rendering so it can be tested without a browser. */
+const CHIP_TYPES = [
+ {name:'Blue Hoot', base:'#3272e5',light:'#719fff',dark:'#15429b',ink:'#fff4df'},
+ {name:'Pop Riot',base:'#e64253',light:'#ff7a85',dark:'#982435',ink:'#fff8ee'},
+ {name:'ZESTO',base:'#fa8919',light:'#ffc45c',dark:'#b6530f',ink:'#fff6dc'},
+ {name:'Leaf Sip',base:'#21aaa9',light:'#68e0cd',dark:'#08706e',ink:'#ecfff2'},
+ {name:'MOONPOP',base:'#7844c4',light:'#ba8afa',dark:'#432170',ink:'#faf0ff'},
+ {name:'LIMBO',base:'#bdd934',light:'#ecfb93',dark:'#7d9820',ink:'#284a26'}
+];
+class ChipRules {
+ static neighbors(index) {
+  const x=index%5,y=Math.floor(index/5),n=[];
+  if(y>0)n.push(index-5);if(x>0)n.push(index-1);if(x<4)n.push(index+1);if(y<5)n.push(index+5);return n;
+ }
+ static run(stack) {if(!stack.length)return 0;let i=stack.length-1;while(i>=0&&stack[i]===stack[stack.length-1])i--;return stack.length-1-i;}
+ // Only the entire contiguous top group clears; buried layers survive.
+ // Total height alone is not a match. There is no capacity limit.
+ static full(stack) {return this.run(stack)>=10;}
+ static empty(board) {return board.reduce((n,s)=>n+Number(s.length===0),0);}
+ static over(board) {return this.empty(board)===0;}
+ static makeTray(random=Math.random,board=[],elapsed=0) {
+  const assistance=.85-.55*Math.min(1,Math.max(0,elapsed-180000)/420000);
+  const colors=elapsed<180000?4:elapsed<360000?5:6;
+  const exposed=board.filter(s=>s.length).map(s=>s[s.length-1]);
+  const anchor=exposed.length?exposed[Math.floor(random()*exposed.length)]:Math.floor(random()*colors);
+  return Array.from({length:3},()=>{
+   const brand=random()<assistance?anchor:Math.floor(random()*colors);
+   const n=elapsed<180000?4+Math.floor(random()*3):2+Math.floor(random()*4);
+   const stack=Array(n).fill(brand);
+   if(random()<(elapsed<180000?.22:.42)){
+    const under=(brand+1+Math.floor(random()*(colors-1)))%colors;
+    for(let i=0;i<Math.min(2,n-2);i++)stack[i]=under;
+   }
+   return stack;
+  });
+ }
+ static place(board,tray,slot,index) {
+  if(!Number.isInteger(slot)||slot<0||slot>=30||!Number.isInteger(index)||index<0||index>2||board[slot].length||!tray[index]||!tray[index].length)return false;
+  board[slot]=tray[index].slice();tray[index]=null;return true;
+ }
+ static *resolve(board,start) {
+  const queue=[start],pending=new Set(queue);
+  const enqueue=i=>{if(board[i].length&&!pending.has(i)){queue.push(i);pending.add(i);}};
+  while(queue.length){
+   const target=queue.shift();pending.delete(target);
+   if(!board[target].length)continue;
+   // Gather EVERY matching neighbor before checking ignition, so 8+6+7
+   // becomes one 21-chip clear, not a 10-chip clear with stranded leftovers.
+   for(const source of this.neighbors(target)){
+    const dst=board[target],src=board[source];
+    if(!src.length||src[src.length-1]!==dst[dst.length-1])continue;
+    const n=this.run(src),beforeSource=src.slice(),beforeTarget=dst.slice();
+    const chips=src.splice(src.length-n,n);
+    for(const chip of chips)dst.push(chip);
+    yield{type:'merge',from:source,to:target,chips,beforeSource,beforeTarget};
+    // Only newly uncovered brands become new targets. This avoids bouncing
+    // an unchanged top run between neighboring stacks indefinitely.
+    if(src.length)enqueue(source);
+   }
+   const stack=board[target];
+   if(this.full(stack)){
+    const matched=this.run(stack),brand=stack[stack.length-1],count=matched;
+    const chips=stack.splice(stack.length-matched,matched);
+    enqueue(target);
+    yield{type:'clear',index:target,brand,chips,count,matched,points:count*10};
+   }
+  }
+ }
+}
+window.ChipRules=ChipRules;
+/* Procedural Foley + musical rewards. All oscillators, noise, filtering and
+   short echo tails are synthesized locally. Optional context injection lets
+   the same engine be verified with OfflineAudioContext. */
+class ChipAudio {
+ constructor(context){
+  this.ctx=context||new(window.AudioContext||window.webkitAudioContext)();
+  const c=this.ctx;this.voices=new Set();this.enabled=true;
+  this.bus=c.createGain();this.bus.gain.value=.8;
+  this.compressor=c.createDynamicsCompressor();
+  this.compressor.threshold.value=-19;this.compressor.knee.value=22;this.compressor.ratio.value=5;
+  this.compressor.attack.value=.003;this.compressor.release.value=.16;
+  this.master=c.createGain();this.master.gain.value=.65;
+  this.bus.connect(this.compressor);this.compressor.connect(this.master);this.master.connect(c.destination);
+  this.echo=c.createDelay(.5);this.echo.delayTime.value=.135;
+  this.echoFilter=c.createBiquadFilter();this.echoFilter.type='lowpass';this.echoFilter.frequency.value=2800;
+  this.feedback=c.createGain();this.feedback.gain.value=.16;
+  this.echo.connect(this.echoFilter);this.echoFilter.connect(this.feedback);this.feedback.connect(this.echo);this.echoFilter.connect(this.bus);
+  this.noise=c.createBuffer(1,Math.ceil(c.sampleRate*.7),c.sampleRate);
+  const samples=this.noise.getChannelData(0);let seed=9371;
+  for(let i=0;i<samples.length;i++){seed=(seed*1664525+1013904223)>>>0;samples[i]=seed/2147483648-1;}
+ }
+ setEnabled(enabled){
+  this.enabled=enabled;const c=this.ctx,at=c.currentTime;
+  this.master.gain.cancelScheduledValues(at);this.master.gain.setTargetAtTime(enabled?.65:0,at,.012);
+  if(enabled&&c.state==='suspended'&&c.resume)c.resume().catch(()=>{});
+ }
+ voice({at=this.ctx.currentTime,duration=.15,type='sine',from=440,to=220,gain=.1,noise=false,filter='lowpass',q=.7,pan=0,echo=0,attack=.004}){
+  if(this.voices.size>=72)return;
+  const c=this.ctx,node=noise?c.createBufferSource():c.createOscillator(),envelope=c.createGain(),nodes=[node,envelope];
+  if(noise){node.buffer=this.noise;node.loop=true;}else node.type=type;
+  const pitch=noise?c.createBiquadFilter():node;
+  if(noise){pitch.type=filter;pitch.Q.value=q;nodes.push(pitch);node.connect(pitch);} 
+  pitch.frequency.setValueAtTime(from,at);pitch.frequency.exponentialRampToValueAtTime(Math.max(25,to),at+duration);
+  if(noise)pitch.connect(envelope);else node.connect(envelope);
+  envelope.gain.setValueAtTime(.0001,at);envelope.gain.exponentialRampToValueAtTime(gain,at+attack);envelope.gain.exponentialRampToValueAtTime(.0001,at+duration);
+  let out=envelope;
+  if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=pan;envelope.connect(p);nodes.push(p);out=p;}
+  out.connect(this.bus);
+  if(echo){const send=c.createGain();send.gain.value=echo;out.connect(send);send.connect(this.echo);nodes.push(send);}
+  this.voices.add(node);node.onended=()=>{nodes.forEach(n=>n.disconnect());this.voices.delete(node);};
+  node.start(at);node.stop(at+duration+.015);
+ }
+ play(kind,{chain=0,count=2,pan=0}={}){
+  if(!this.enabled)return;
+  const at=this.ctx.currentTime+.008,pitch=Math.pow(2,Math.min(chain,10)*1.5/12);
+  const v=opts=>this.voice({at,pan,...opts});
+  if(kind==='pick'){v({from:800,to:560,gain:.045,duration:.06});return;}
+  if(kind==='place'||kind==='land'){
+   v({type:'triangle',from:(kind==='land'?300:230)*pitch,to:85,gain:.18,duration:.13});
+   v({noise:true,filter:'highpass',from:4300,to:1800,gain:.075,duration:.045});
+   v({at:at+.012,from:1200*pitch,to:500*pitch,gain:.035,duration:.07});return;
+  }
+  if(kind==='merge'){
+   v({noise:true,filter:'bandpass',q:1.2,from:900*pitch,to:5200*pitch,gain:.11,duration:.18,attack:.02});
+   v({type:'triangle',from:320*pitch,to:890*pitch,gain:.07,duration:.19,echo:.1});
+   const ticks=Math.min(5,count);for(let i=0;i<ticks;i++)v({at:at+i*.026,from:(1250+i*180)*pitch,to:800*pitch,gain:.026,duration:.036});return;
+  }
+  if(kind==='charge'){
+   v({type:'sine',from:210*pitch,to:960*pitch,gain:.055,duration:.16,attack:.065});
+   v({noise:true,filter:'bandpass',from:600,to:2000,gain:.04,duration:.16,attack:.06});return;
+  }
+  if(kind==='clear'){
+   const size=Math.min(2.2,1+Math.log2(Math.max(10,count)/10)*.45);
+   v({from:150,to:38,gain:.26*size,duration:.34});
+   v({noise:true,from:6500,to:230,gain:.20*size,duration:.32});
+   v({type:'triangle',from:330*pitch,to:660*pitch,gain:.075,duration:.15});
+   [1,1.25,1.5,2,2.5].forEach((ratio,i)=>v({at:at+.035+i*.043,from:523.25*ratio*pitch,to:523.25*ratio*pitch,gain:.075,duration:.28+i*.025,echo:.22,pan:pan+(i%2?.16:-.16)}));
+   if(count>=20)v({at:at+.11,from:2093*pitch,to:1568*pitch,gain:.045,duration:.35,echo:.18});return;
+  }
+  if(kind==='error'){
+   v({type:'triangle',from:190,to:105,gain:.12,duration:.12});
+   v({at:at+.08,type:'triangle',from:145,to:85,gain:.075,duration:.13});return;
+  }
+  if(kind==='refresh')[440,554.37,659.25].forEach((f,i)=>v({at:at+i*.04,from:f,to:f,gain:.035,duration:.12}));
+ }
+}
+window.ChipAudio=ChipAudio;
+(() => {
+const W=450,H=800,R=26,MAX_DEPTH=19,BOARD_SCALE=.9;
+const depth=n=>Math.min(MAX_DEPTH,Math.max(0,n-1)*4);
+const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id),reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const boardRect={x:24,y:178,w:402,h:386},pitchX=76,pitchY=59;
+const trayCenters=[89,225,361],trayY=694;
+const game={board:Array.from({length:30},()=>[]),tray:[],score:0,best:0,selected:-1,busy:false,over:false,moves:0,round:1,cursor:-1,keyboard:false,drag:null,hover:-1,flight:null,particles:[],floats:[],pulses:[],invalid:null,combo:0,transfers:0,sound:true,modal:null,bounces:new Map(),burn:null,shake:null,banner:null,lastGain:0};
+try{game.sound=localStorage.getItem('chip-stack-sort-sound')!=='off';}catch{}
+let audio=null,displayScore=0,last=performance.now(),clock=last,dpr=1,returnFocus=null,roundToken=0;
+const brandCache=[];
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),ease=t=>1-Math.pow(1-t,3),lerp=(a,b,t)=>a+(b-a)*t;
+const center=i=>({x:73+(i%5)*pitchX,y:216+Math.floor(i/5)*pitchY});
+const topY=(y,count)=>y-depth(count)*BOARD_SCALE;
+function rr(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
+function circle(c,x,y,r){c.beginPath();c.arc(x,y,r,0,Math.PI*2);}
+function text(c,t,x,y,size,color,weight='600',align='center'){c.font=`${weight} ${size}px Arial, Helvetica, sans-serif`;c.textAlign=align;c.textBaseline='middle';c.fillStyle=color;c.fillText(t,x,y);}
+function loadBest(){try{return Math.max(0,Number(localStorage.getItem('chip-stack-sort-best'))||0,Number(localStorage.getItem('cap-best'))||0);}catch{return 0;}}
+function saveBest(){try{localStorage.setItem('chip-stack-sort-best',String(game.best));}catch{/* Private/file browsing can disable storage; gameplay still works. */}}
+function announce(message){$('live').textContent=message;}
+function sound(kind,chain=0,count=2,index=-1){
+ if(!game.sound||document.hidden)return;
+ try{
+  if(!audio)audio=new ChipAudio();
+  audio.setEnabled(true);
+  audio.play(kind,{chain,count,pan:index<0?0:((index%5)-2)*.2});
+ }catch{game.sound=false;audio?.setEnabled(false);updateSound();}
+}
+function updateSound(){const b=$('sound-btn');b.setAttribute('aria-pressed',String(game.sound));b.setAttribute('aria-label',game.sound?'Turn sound off':'Turn sound on');$('sound-waves').setAttribute('d',game.sound?'M16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14':'m16 9 6 6m0-6-6 6');}
+function syncUI(){
+ $('combo').textContent=game.combo>1?'×'+game.combo:'—';$('best').textContent=game.best.toLocaleString();$('open-count').textContent=ChipRules.empty(game.board);
+ const left=game.tray.filter(Boolean).length;$('tray-status').textContent=`${left} stack${left===1?'':'s'} to play`;
+ $('help-btn').disabled=game.busy;$('restart-btn').disabled=game.busy;
+ if(game.busy)$('hint').innerHTML='Making room for a little magic.<br><strong>Sorting your stacks…</strong>';
+ else if(game.selected>=0)$('hint').innerHTML='Find an empty slot.<br><strong>Tap to place · Esc to cancel</strong>';
+ else $('hint').innerHTML='A little order. A lot of satisfaction.<br><strong>DRAG OR TAP · MATCH THE TOPS</strong>';
+}
+function createBrandArt(id){
+ const chip=CHIP_TYPES[id],c=document.createElement('canvas');c.width=216;c.height=216;
+ const g=c.getContext('2d');g.scale(3,3);g.translate(36,36);
+ function edge(y){g.beginPath();for(let i=0;i<84;i++){const a=i*Math.PI/42,r=i%4<2?27:24.8;const x=Math.cos(a)*r,yy=Math.sin(a)*r*.83+y;i?g.lineTo(x,yy):g.moveTo(x,yy);}g.closePath();}
+ const metal=g.createLinearGradient(-26,-25,26,25);metal.addColorStop(0,'#fff5dc');metal.addColorStop(.25,'#a19b91');metal.addColorStop(.48,'#eee7d7');metal.addColorStop(.72,'#817d77');metal.addColorStop(1,'#ded6c7');
+ edge(4);g.fillStyle=chip.dark;g.fill();g.strokeStyle='#625f56';g.lineWidth=1;g.stroke();edge(0);g.fillStyle=metal;g.fill();
+ for(let i=0;i<21;i++){const a=i*Math.PI*2/21;g.beginPath();g.moveTo(Math.cos(a)*23,Math.sin(a)*19);g.lineTo(Math.cos(a)*26,Math.sin(a)*22+2);g.strokeStyle='#514c4770';g.stroke();}
+ const paint=g.createLinearGradient(-10,-24,15,24);paint.addColorStop(0,chip.light);paint.addColorStop(.45,chip.base);paint.addColorStop(1,chip.dark);
+ g.beginPath();g.ellipse(0,-1,23,19,0,0,Math.PI*2);g.fillStyle=paint;g.fill();g.strokeStyle='#ffffffb0';g.lineWidth=.8;g.stroke();
+ g.beginPath();g.ellipse(0,-1,20,16,0,0,Math.PI*2);g.strokeStyle='#ffffff40';g.stroke();
+ text(g,['✦','◆','☀','❧','ϟ','✧'][id],0,-10,9,'#fff3cd','700');
+ text(g,chip.name,0,2,9.5,'#fff8e8','900');text(g,'BOTTLED JOY',0,11,3.2,'#fff6dd','700');
+ g.beginPath();g.ellipse(-6,-13,10,2,-.2,0,Math.PI*2);g.fillStyle='#ffffff36';g.fill();return c;
+}
+for(let i=0;i<6;i++)brandCache.push(createBrandArt(i));
+function drawChip(x,y,id,alpha=1,scale=1,rotation=0){ctx.save();ctx.globalAlpha*=alpha;ctx.translate(x,y);ctx.scale(scale,scale);ctx.rotate(rotation);ctx.drawImage(brandCache[id],-36,-36,72,72);ctx.restore();}
+function drawStack(stack,x,y,{alpha=1,scale=1,badge=true,shadow=true,squash=0,heat=0}={}){
+ if(!stack||!stack.length)return;
+ const n=stack.length,h=depth(n),layers=n,run=ChipRules.run(stack),ready=run>=10;
+ ctx.save();ctx.translate(x,y);ctx.scale(scale*(1+squash),scale*(1-squash*.75));ctx.globalAlpha*=alpha;
+ if(shadow){ctx.save();ctx.filter='blur(3px)';ctx.fillStyle='#00000070';ctx.beginPath();ctx.ellipse(1,10,26,17,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+ // Every cap contributes a colored rim; depth is compressed to keep cells readable.
+ for(let j=0;j<layers;j++){
+  const fraction=layers===1?0:j/(layers-1),cy=-fraction*h,id=stack[Math.round(fraction*(n-1))];
+  if(j<layers-1){const dx=(1-fraction)*4;ctx.beginPath();ctx.ellipse(dx,cy+3,R,21,0,0,Math.PI*2);ctx.fillStyle=CHIP_TYPES[id].dark;ctx.fill();ctx.beginPath();ctx.ellipse(dx,cy,R,21,0,0,Math.PI*2);ctx.fillStyle=CHIP_TYPES[id].base;ctx.fill();ctx.strokeStyle=CHIP_TYPES[id].light;ctx.lineWidth=1;ctx.stroke();}
+  else drawChip(0,cy,id);
+ }
+ if(run>=7||heat){circle(ctx,0,-h,R+2);ctx.lineWidth=1.5;ctx.strokeStyle=ready?'#ffdc87':'#fbc66c70';ctx.stroke();if(heat){circle(ctx,0,-h,R);ctx.fillStyle=`rgba(255,230,165,${heat*.6})`;ctx.fill();}}
+ if(badge){
+  const label=run.toLocaleString(),width=Math.max(23,label.length*6.6+10),right=34,bottom=20-h,mixed=run!==n;
+  rr(ctx,right-width,bottom-8,width,17,7);ctx.fillStyle=ready?'#ffd08a':'#161616';ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle=ready?'#fff0c5':mixed?'#ceac73':'#827063';ctx.stroke();
+  text(ctx,label,right-width/2,bottom+.5,10,ready?'#442609':'#fff1df','800');
+  
+  // The progress ring describes the matching top run, not total height.
+  ctx.beginPath();ctx.arc(0,-h,R+2,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.min(run/10,1));ctx.lineWidth=1.4;ctx.strokeStyle=ready?'#fff0b2':'#ffffff35';ctx.stroke();
+ }
+ ctx.restore();
+}
+function drawBackground(){
+ const bg=ctx.createLinearGradient(0,0,450,800);bg.addColorStop(0,'#e5c49d');bg.addColorStop(.5,'#f2d9b7');bg.addColorStop(1,'#cfaa7f');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+ for(let i=0;i<35;i++){ctx.beginPath();ctx.moveTo(i*17-40,0);ctx.bezierCurveTo(i*17-30,260,i*17-60,500,i*17-35,800);ctx.strokeStyle=i%4?'#84532a0b':'#fff8e52b';ctx.lineWidth=i%4?1:3;ctx.stroke();}
+ ctx.save();ctx.shadowColor='#65402040';ctx.shadowBlur=20;ctx.shadowOffsetY=9;
+ rr(ctx,boardRect.x-7,boardRect.y-8,boardRect.w+14,boardRect.h+16,22);ctx.fillStyle='#f6ecd9';ctx.fill();ctx.shadowColor='transparent';ctx.strokeStyle='#fff8e9';ctx.lineWidth=2;ctx.stroke();ctx.restore();
+ rr(ctx,25,647,400,81,16);ctx.fillStyle='#333d3b';ctx.shadowColor='#4b311a50';ctx.shadowBlur=12;ctx.shadowOffsetY=7;ctx.fill();ctx.shadowColor='transparent';ctx.strokeStyle='#69736a';ctx.lineWidth=2;ctx.stroke();
+}
+function cellHit(p){for(let i=0;i<30;i++){const q=center(i);if(Math.abs(p.x-q.x)<=34&&Math.abs(p.y-q.y)<=27)return i;}return -1;}
+function trayHit(p){for(let i=0;i<3;i++)if(Math.abs(p.x-trayCenters[i])<53&&p.y>=648&&p.y<=728&&game.tray[i])return i;return -1;}
+function drawBoard(){
+ const targeting=game.selected>=0&&!game.busy;
+ for(let i=0;i<30;i++){
+  const p=center(i),occupied=game.board[i].length>0,highlight=game.hover===i&&targeting,focus=game.keyboard&&game.cursor===i;
+  rr(ctx,p.x-34,p.y-27,68,54,12);const g=ctx.createLinearGradient(0,p.y-27,0,p.y+27);g.addColorStop(0,occupied?'#ddceb6':'#e2d5be');g.addColorStop(1,occupied?'#eee1cb':'#f1e5d1');ctx.fillStyle=g;ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=highlight?(occupied?'#e57567':'#f9bc68'):targeting&&!occupied?'#ad956f':'#cbbb9f';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(p.x-21,p.y-26);ctx.lineTo(p.x+21,p.y-26);ctx.strokeStyle='#ffffff07';ctx.stroke();
+  if(!occupied){
+   const pulse=targeting?.6+Math.sin(clock*.004+i*.25)*.15:.32;
+   ctx.globalAlpha=pulse;ctx.strokeStyle=targeting?'#e7bb78':'#9b8670';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x-3,p.y);ctx.lineTo(p.x+3,p.y);ctx.moveTo(p.x,p.y-3);ctx.lineTo(p.x,p.y+3);ctx.stroke();ctx.globalAlpha=1;
+  }
+  if(focus){rr(ctx,p.x-35.5,p.y-28.5,71,57,13);ctx.strokeStyle='#fbd199';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);}
+  if(highlight&&!occupied){ctx.fillStyle='#f9bc6812';ctx.fill();if(!game.drag?.moving&&game.tray[game.selected])drawStack(game.tray[game.selected],p.x,p.y,{alpha:.28,badge:false,shadow:false,scale:BOARD_SCALE});}
+  let stack=game.board[i];
+  if(game.flight?.type==='merge'&&game.flight.to===i)stack=game.flight.beforeTarget;
+  if(game.flight?.type==='place'&&game.flight.to===i)stack=[];
+  const bounce=game.bounces.get(i),age=bounce?(clock-bounce.at)/420:1;
+  const squash=!reduced&&age<1?Math.sin(age*Math.PI*3)*Math.exp(-age*3)*bounce.strength:0;
+  if(age>=1)game.bounces.delete(i);
+  drawStack(stack,p.x,p.y,{scale:BOARD_SCALE,squash});
+  if(game.invalid?.index===i){const t=(clock-game.invalid.at)/450;if(t<1){rr(ctx,p.x-34,p.y-27,68,54,12);ctx.strokeStyle=`rgba(255,110,91,${1-t})`;ctx.lineWidth=2;ctx.stroke();}else game.invalid=null;}
+ }
+}
+function drawTray(){
+ for(let i=0;i<3;i++){
+  const x=trayCenters[i],selected=game.selected===i,s=game.tray[i];
+  if(i<2){ctx.beginPath();ctx.moveTo(x+68,662);ctx.lineTo(x+68,714);ctx.strokeStyle='#44382d70';ctx.lineWidth=1;ctx.stroke();}
+  if(selected){rr(ctx,x-55,651,110,73,12);ctx.fillStyle='#d99b4b13';ctx.fill();ctx.strokeStyle='#b38954';ctx.lineWidth=1;ctx.stroke();}
+  if(s){
+   if(!(game.drag?.moving&&game.drag.index===i))drawStack(s,x,trayY,{scale:selected?1.07:1,alpha:game.busy?.7:1});
+   text(ctx,String(i+1),x,719,7.5,selected?'#e6bd83':'#7e6e5d','600');
+  }else{circle(ctx,x,686,18);ctx.strokeStyle='#4a3c2c';ctx.setLineDash([2,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.moveTo(x-6,686);ctx.lineTo(x-1,691);ctx.lineTo(x+7,681);ctx.strokeStyle='#7b664c';ctx.lineWidth=1.5;ctx.stroke();}
+ }
+ if(game.drag?.moving){const d=game.drag;drawStack(d.stack,d.x,d.y-15,{scale:1.1,alpha:.95});}
+}
+function drawEffects(){
+ const f=game.flight;
+ if(f){
+  const progress=clamp((clock-f.start)/f.duration,0,1),samples=Math.min(f.chips.length,9);
+  for(let j=0;j<samples;j++){
+   const fraction=samples===1?0:j/(samples-1),index=Math.round(fraction*(f.chips.length-1));
+   const stagger=reduced?0:fraction*.22,t=clamp((progress-stagger)/(1-stagger),0,1),e=ease(t),lift=reduced?0:Math.sin(t*Math.PI)*30;
+   const sy=f.fromPoint.y-depth(f.sourceCount)*(f.sourceCount-f.chips.length+index)/Math.max(1,f.sourceCount-1)*f.sourceScale;
+   const ty=f.toPoint.y-depth(f.targetCount)*(f.beforeTarget.length+index)/Math.max(1,f.targetCount-1)*BOARD_SCALE;
+   const x=lerp(f.fromPoint.x,f.toPoint.x,e),y=lerp(sy,ty,e)-lift;
+   if(!reduced&&t>.05&&t<.95){ctx.save();ctx.globalAlpha=Math.sin(t*Math.PI)*.2;ctx.strokeStyle=CHIP_TYPES[f.chips[index]].light;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-(f.toPoint.x-f.fromPoint.x)*.09,y-(ty-sy)*.09+4);ctx.lineTo(x,y);ctx.stroke();ctx.restore();}
+   drawChip(x,y,f.chips[index],1,lerp(f.sourceScale,BOARD_SCALE,e)+(reduced?0:Math.sin(t*Math.PI)*.07),reduced?0:Math.sin(t*Math.PI)*.09);
+  }
+  if(f.chips.length>9){text(ctx,`+${f.chips.length}`,lerp(f.fromPoint.x,f.toPoint.x,ease(progress)),lerp(f.fromPoint.y,f.toPoint.y,ease(progress))-42,12,'#ffe3ac','800');}
+ }
+ if(game.burn){
+  const b=game.burn,p=center(b.index),t=clamp((clock-b.at)/b.life,0,1);
+  const glow=ctx.createRadialGradient(p.x,p.y-5,3,p.x,p.y-5,65);glow.addColorStop(0,`rgba(255,179,69,${t*.45})`);glow.addColorStop(1,'#ffb34500');ctx.fillStyle=glow;ctx.fillRect(p.x-65,p.y-70,130,130);
+  drawStack(b.chips,p.x,p.y,{scale:BOARD_SCALE*(reduced?1:1+t*.16),squash:reduced?0:Math.sin(t*Math.PI)*.17,heat:t,shadow:false});
+ }
+ game.pulses=game.pulses.filter(p=>clock-p.at<p.life);
+ for(const p of game.pulses){const t=clamp((clock-p.at)/p.life,0,1);circle(ctx,p.x,p.y,p.radius+ease(t)*(p.spread||25));ctx.strokeStyle=p.color;ctx.globalAlpha=(1-t)*.7;ctx.lineWidth=(p.width||2)*(1-t)+.4;ctx.stroke();ctx.globalAlpha=1;}
+ game.particles=game.particles.filter(p=>clock-p.at<p.life);
+ for(const p of game.particles){const age=Math.max(0,(clock-p.at)/1000),t=clamp((clock-p.at)/p.life,0,1);ctx.save();ctx.globalAlpha=(1-t)*(1-t);ctx.translate(p.x+p.vx*age,p.y+p.vy*age+180*age*age);ctx.rotate(p.rotation+age*p.spin);ctx.fillStyle=p.color;
+  if(p.kind==='spark'){ctx.fillRect(-p.size/2,-1,p.size*(1-t)+1,2);}else if(p.kind==='coin'){circle(ctx,0,0,p.size*.55);ctx.fill();ctx.strokeStyle='#ffffff80';ctx.lineWidth=.6;ctx.stroke();}else{rr(ctx,-p.size/2,-p.size/2,p.size,p.size*.55,1);ctx.fill();}ctx.restore();}
+ game.floats=game.floats.filter(f=>clock-f.at<f.life);
+ for(const p of game.floats){const t=clamp((clock-p.at)/p.life,0,1);ctx.save();ctx.globalAlpha=Math.min(t*12,1)*Math.min((1-t)*4,1);const y=p.y-(reduced?0:ease(t)*30);ctx.translate(p.x,y);if(!reduced){const s=1+Math.sin(Math.min(t*5,1)*Math.PI)*.2;ctx.scale(s,s);}ctx.shadowColor='#19120d';ctx.shadowBlur=9;ctx.lineWidth=4;ctx.strokeStyle='#23170e';ctx.font=`800 ${p.size}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.strokeText(p.label,0,0);text(ctx,p.label,0,0,p.size,p.color,'800');if(p.detail)text(ctx,p.detail,0,22,9,'#fff0d2','700');ctx.restore();}
+ if(game.banner){const b=game.banner,t=(clock-b.at)/b.life;if(t>=1)game.banner=null;else{ctx.save();ctx.globalAlpha=Math.min(t*12,1,(1-t)*5);const width=Math.min(370,b.label.length*6.6+34);rr(ctx,225-width/2,592,width,24,12);ctx.fillStyle='#533c23';ctx.fill();ctx.strokeStyle='#b48a4e';ctx.lineWidth=1;ctx.stroke();text(ctx,b.label,225,604,10.5,'#ffe0a6','800');ctx.restore();}}
+}
+function frame(now){
+ clock=now;const dt=Math.min((now-last)/1000,.05);last=now;
+ if(!document.hidden&&!game.over&&!game.modal&&game.moves>0){game.elapsed+=dt*1000;}
+ $('time').textContent=Math.floor(game.elapsed/60000)+':'+String(Math.floor(game.elapsed/1000)%60).padStart(2,'0');
+ if(Math.abs(displayScore-game.score)>.5)displayScore=lerp(displayScore,game.score,1-Math.exp(-dt*11));else displayScore=game.score;
+ const displayed=Math.round(displayScore).toLocaleString();if($('score').textContent!==displayed)$('score').textContent=displayed;
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);drawBackground();ctx.save();
+ if(game.shake&&!reduced){const s=game.shake,t=clamp((now-s.at)/s.life,0,1),power=s.power*(1-t)*(1-t);ctx.translate(Math.sin(t*53)*power,Math.cos(t*67)*power*.55);if(t>=1)game.shake=null;}
+ drawBoard();drawTray();drawEffects();ctx.restore();
+ requestAnimationFrame(frame);
+}
+function resize(){const rect=canvas.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,3)*rect.width/W;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);}
+function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function impact(power){if(!reduced)game.shake={at:performance.now(),life:230+power*18,power:Math.min(6,power)};}
+async function fly(event,token=roundToken){
+ const a=event.type==='place'?{x:trayCenters[event.trayIndex],y:trayY}:center(event.from),b=center(event.to);
+ const sourceCount=event.type==='place'?event.chips.length:event.beforeSource.length;
+ const flight={...event,fromPoint:a,toPoint:b,sourceCount,targetCount:event.beforeTarget.length+event.chips.length,sourceScale:event.type==='place'?1:BOARD_SCALE,start:performance.now(),duration:reduced?30:Math.min(410,240+Math.log2(event.chips.length+1)*32)};
+ game.flight=flight;await wait(flight.duration);if(token!==roundToken)return;
+ game.flight=null;
+ game.bounces.set(event.to,{at:performance.now(),strength:Math.min(.22,.1+event.chips.length*.006)});
+ sound(event.type==='place'?'place':'land',game.transfers*.35+game.combo,event.chips.length,event.to);
+ if(event.type==='merge'&&flight.targetCount>=8)impact(1.3+Math.min(2,flight.targetCount/14));
+ game.pulses.push({x:b.x,y:topY(b.y,game.board[event.to].length),at:performance.now(),life:260,radius:23,color:CHIP_TYPES[event.chips[0]].light});
+}
+function burst(event){
+ const {index,brand,count,points}=event,p=center(index),at=performance.now(),size=Math.min(2.3,1+Math.log2(count/10)*.42);
+ game.pulses.push({x:p.x,y:p.y-6,at,life:520,radius:16,spread:38*size,width:4,color:'#ffdfa0'});
+ if(!reduced){
+  game.pulses.push({x:p.x,y:p.y-6,at,life:700,radius:24,spread:49*size,width:2,color:CHIP_TYPES[brand].light});
+  const pieces=Math.min(110,Math.round(35+count*1.7+game.combo*5));
+  for(let i=0;i<pieces;i++){const a=Math.random()*Math.PI*2,v=(55+Math.random()*145)*size;game.particles.push({x:p.x,y:p.y-6,vx:Math.cos(a)*v,vy:Math.sin(a)*v-65,size:3+Math.random()*6,color:i%4===0?'#fff0b9':CHIP_TYPES[brand].light,at,life:550+Math.random()*550,rotation:Math.random()*6,spin:(Math.random()-.5)*12,kind:i%5===0?'coin':i%3===0?'spark':'confetti'});}
+  if(game.particles.length>300)game.particles.splice(0,game.particles.length-300);
+ }
+ const title=count>=20?'MEGA CLEAR!':count>=14?'SUPER CLEAR!':'SWEET CLEAR!';
+ game.floats.push({x:clamp(p.x,80,370),y:Math.max(238,p.y-8),label:`+${points.toLocaleString()}!`,detail:`${count} CAPS · ${title}`,size:Math.min(36,25+count*.25),color:'#ffdfa0',at,life:1350});
+ game.banner={label:game.combo>1?`COMBO x${game.combo}! · ${title}`:`${title} · ${count} CAPS`,at,life:1700};
+ impact(2+Math.min(4,(count-10)*.16+game.combo*.5));
+}
+function reject(index){game.invalid={index,at:performance.now()};sound('error');announce('That slot is occupied. Choose an empty slot.');}
+async function place(index){
+ if(game.busy||game.over||game.modal||game.selected<0)return false;
+ if(!Number.isInteger(index)||index<0||index>=30||game.board[index].length){reject(index);return false;}
+ const ti=game.selected,stack=game.tray[ti]?.slice();if(!stack)return false;
+ if(!ChipRules.place(game.board,game.tray,index,ti))return false;
+ const token=roundToken,scoreBefore=game.score;
+ game.selected=-1;game.busy=true;game.hover=-1;game.combo=0;game.transfers=0;game.moves++;syncUI();
+ await fly({type:'place',trayIndex:ti,to:index,chips:stack,beforeTarget:[]},token);if(token!==roundToken)return false;
+ for(const event of ChipRules.resolve(game.board,index)){
+  if(event.type==='merge'){
+   game.transfers++;sound('merge',game.combo+game.transfers*.45,event.chips.length,event.to);await fly(event,token);if(token!==roundToken)return false;
+  }else{
+   game.combo++;
+   game.burn={...event,at:performance.now(),life:reduced?30:180};
+   sound('charge',game.combo-1,event.count,event.index);
+   await wait(game.burn.life);if(token!==roundToken)return false;game.burn=null;
+   event.points=Math.round(event.points*(1+.25*(game.combo-1)));game.score+=event.points;game.best=Math.max(game.best,game.score);saveBest();
+   burst(event);sound('clear',game.combo-1,event.count,event.index);
+   $('score-card').classList.remove('bump');void $('score-card').offsetWidth;$('score-card').classList.add('bump');syncUI();
+   await wait(reduced?30:200);if(token!==roundToken)return false;
+  }
+ }
+ game.lastGain=game.score-scoreBefore;
+ if(game.combo>1)game.banner={label:`COMBO x${game.combo}! · +${game.lastGain.toLocaleString()} TOTAL`,at:performance.now(),life:2000};
+ if(game.tray.every(s=>!s)){game.tray=ChipRules.makeTray(Math.random,game.board,game.elapsed);game.round++;sound('refresh');}
+ game.busy=false;game.over=ChipRules.over(game.board);syncUI();
+ announce(`${game.combo?`${game.combo} stack${game.combo===1?'':'s'} cleared. `:''}Score ${game.score}. ${ChipRules.empty(game.board)} empty slots. ${game.tray.filter(Boolean).length} tray stacks available.`);
+ if(game.over){await wait(reduced?0:300);if(token===roundToken&&game.over)openModal('over');}
+ return true;
+}
+function select(index){if(game.busy||game.over||game.modal||!game.tray[index])return;game.selected=index;sound('pick');syncUI();const s=game.tray[index];announce(`Stack ${index+1}: ${s.length} caps. ${CHIP_TYPES[s[s.length-1]].name} on top${ChipRules.run(s)!==s.length?', with another brand underneath':''}. Select an empty grid slot.`);}
+function newGame(){
+ game.elapsed=0;roundToken++;game.bounces.clear();game.burn=null;game.shake=null;game.banner=null;game.lastGain=0;game.transfers=0;
+ game.board=Array.from({length:30},()=>[]);game.tray=ChipRules.makeTray();game.score=0;displayScore=0;game.best=loadBest();game.selected=-1;game.busy=false;game.over=false;game.moves=0;game.round=1;game.drag=null;game.hover=-1;game.flight=null;game.particles=[];game.floats=[];game.pulses=[];game.invalid=null;game.cursor=-1;game.combo=0;game.keyboard=false;closeModal();syncUI();announce('New game. Thirty empty slots. Select one of your three tray stacks.');
+}
+function point(e){const b=canvas.getBoundingClientRect();return{x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height};}
+canvas.addEventListener('pointerdown',e=>{
+ if(game.busy||game.over||game.modal||game.drag||e.button!==0)return;
+ canvas.focus({preventScroll:true});game.keyboard=false;const p=point(e),ti=trayHit(p);
+ if(ti>=0){select(ti);game.drag={index:ti,stack:game.tray[ti].slice(),startX:p.x,startY:p.y,x:p.x,y:p.y,moving:false,pointer:e.pointerId};canvas.setPointerCapture(e.pointerId);}
+ else if(game.selected>=0){const slot=cellHit(p);if(slot>=0)place(slot);else{game.selected=-1;syncUI();}}
+});
+canvas.addEventListener('pointermove',e=>{
+ const p=point(e);
+ if(game.drag&&e.pointerId===game.drag.pointer){const d=game.drag;d.x=p.x;d.y=p.y;if(Math.hypot(p.x-d.startX,p.y-d.startY)>7)d.moving=true;game.hover=d.moving?cellHit({x:p.x,y:p.y-15}):-1;}
+ else if(!game.drag)game.hover=cellHit(p);
+ canvas.style.cursor=game.busy?'wait':(trayHit(p)>=0||game.selected>=0&&cellHit(p)>=0)?'pointer':'default';
+});
+canvas.addEventListener('pointerup',e=>{
+ if(!game.drag||e.pointerId!==game.drag.pointer)return;
+ const d=game.drag;game.drag=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
+ if(d.moving){const p=point(e),slot=cellHit({x:p.x,y:p.y-15});if(slot>=0)place(slot);else{game.hover=-1;syncUI();announce('Stack returned to tray. Tap an empty slot to place it.');}}
+});
+function cancelDrag(){game.drag=null;game.hover=-1;}
+canvas.addEventListener('pointercancel',cancelDrag);canvas.addEventListener('lostpointercapture',()=>{if(game.drag)cancelDrag();});canvas.addEventListener('pointerleave',()=>{if(!game.drag)game.hover=-1;});
+window.addEventListener('blur',cancelDrag);
+function describeCursor(){const i=game.cursor,s=game.board[i];announce(`Row ${Math.floor(i/5)+1}, column ${i%5+1}. ${s.length?`${s.length} chips, ${CHIP_TYPES[s[s.length-1]].name} on top.`:'Empty slot.'}`);}
+document.addEventListener('keydown',e=>{
+ if(game.modal){if(e.key==='Escape'&&game.modal!=='over'){e.preventDefault();closeModal();}if(e.key==='Tab'){const buttons=[...$('modal').querySelectorAll('button:not(:disabled)')];const first=buttons[0],end=buttons[buttons.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();end.focus();}else if(!e.shiftKey&&document.activeElement===end){e.preventDefault();first.focus();}}return;}
+ if(e.ctrlKey||e.metaKey||e.altKey||game.busy||game.over)return;
+ if(e.target instanceof HTMLButtonElement&&(e.key==='Enter'||e.key===' '))return;
+ if(['1','2','3'].includes(e.key)){e.preventDefault();select(Number(e.key)-1);game.keyboard=true;if(game.cursor<0)game.cursor=game.board.findIndex(s=>!s.length);canvas.focus({preventScroll:true});}
+ else if(e.key.startsWith('Arrow')){e.preventDefault();game.keyboard=true;if(game.cursor<0)game.cursor=0;else{const row=Math.floor(game.cursor/5),col=game.cursor%5;if(e.key==='ArrowLeft')game.cursor=row*5+Math.max(0,col-1);if(e.key==='ArrowRight')game.cursor=row*5+Math.min(4,col+1);if(e.key==='ArrowUp')game.cursor=Math.max(0,row-1)*5+col;if(e.key==='ArrowDown')game.cursor=Math.min(5,row+1)*5+col;}game.hover=game.cursor;describeCursor();}
+ else if(e.key==='Enter'||e.key===' '){e.preventDefault();if(game.cursor>=0)place(game.cursor);}
+ else if(e.key==='Escape'){game.selected=-1;cancelDrag();syncUI();}
+ else if(e.key.toLowerCase()==='h')openModal('help');else if(e.key.toLowerCase()==='m')toggleSound();else if(e.key.toLowerCase()==='r')openModal('restart');
+});
+function closeModal(){const wasOpen=game.modal;game.modal=null;$('overlay').hidden=true;canvas.removeAttribute('aria-hidden');document.querySelector('.header').inert=false;document.querySelector('.footer').inert=false;canvas.inert=false;if(wasOpen)(returnFocus?.isConnected?returnFocus:canvas).focus({preventScroll:true});}
+function openModal(type){
+ if(game.busy)return;cancelDrag();returnFocus=document.activeElement;game.modal=type;$('overlay').hidden=false;canvas.setAttribute('aria-hidden','true');document.querySelector('.header').inert=true;document.querySelector('.footer').inert=true;canvas.inert=true;
+ if(type==='help')$('modal').innerHTML='<div class="modal-eyebrow">SMALL STACKS. BIG SATISFACTION.</div><h2 id="modal-title">Find your kind.</h2><ol class="steps"><li><strong>Pick & place.</strong> Drag a tray stack, or tap it and then tap any empty grid slot.</li><li><strong>Make a match.</strong> All matching top caps from the four neighbors fly into your stack. No stack limit; every matching neighbor joins before ignition.</li><li><strong>Let it chain.</strong> Uncover another brand and it checks its own neighbors. The colored metal rims show the buried layers; the number counts the matching top group.</li><li><strong>Clear the way.</strong> 10+ matching top caps clear together. All buried colors stay and can chain again. Earn 10 points per removed cap, plus 25% for each additional clear in the same move. Play all 3 tray stacks to refill.</li></ol><p>Keep an empty slot available. A full board ends the game.<br><strong>Keyboard:</strong> 1–3 to pick · arrows to aim · Enter to place.</p><button class="primary" id="modal-primary">Got it. Let’s stack.</button>';
+ else if(type==='restart')$('modal').innerHTML='<div class="modal-eyebrow">A CLEAN SLATE</div><h2 id="modal-title">Start fresh?</h2><p>Your current board and score will be reset.<br>Your personal best stays right here.</p><button class="primary" id="modal-primary">Yes, new game</button><button class="secondary" id="modal-secondary">Keep stacking</button>';
+ else $('modal').innerHTML=`<div class="modal-eyebrow">GAME OVER · EVERY STACK COUNTS</div><h2 id="modal-title">All stacked up.</h2><p>No empty slots left. A fresh board is a fresh possibility.</p><div class="result"><div class="result-label">FINAL SCORE</div><div class="result-score">${game.score.toLocaleString()}</div><div class="result-best">PERSONAL BEST ${game.best.toLocaleString()} · ${game.moves} MOVES</div></div><button class="primary" id="modal-primary">Play again</button>`;
+ $('modal-primary').addEventListener('click',()=>type==='help'?closeModal():newGame());$('modal-secondary')?.addEventListener('click',closeModal);$('modal-primary').focus({preventScroll:true});
+}
+function toggleSound(){game.sound=!game.sound;audio?.setEnabled(game.sound);try{localStorage.setItem('chip-stack-sort-sound',game.sound?'on':'off');}catch{}updateSound();if(game.sound)sound('pick');}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)audio?.setEnabled(false);else if(game.sound)audio?.setEnabled(true);});
+$('sound-btn').addEventListener('click',toggleSound);$('help-btn').addEventListener('click',()=>openModal('help'));$('restart-btn').addEventListener('click',()=>openModal('restart'));
+$('overlay').addEventListener('pointerdown',e=>{if(e.target===$('overlay')&&game.modal!=='over')closeModal();});
+window.addEventListener('resize',resize);if(window.ResizeObserver)new ResizeObserver(resize).observe(canvas);
+// A small opt-in diagnostic surface for local tests; absent during normal play.
+if(new URLSearchParams(location.search).has('test'))window.ChipStackDebug={game,place,select,newGame,syncUI,center,openModal,closeModal,depth,drawStack,fly,burst,sound,toggleSound,audioState:()=>audio?{state:audio.ctx.state,voices:audio.voices.size,enabled:audio.enabled}:null};
+newGame();updateSound();resize();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
