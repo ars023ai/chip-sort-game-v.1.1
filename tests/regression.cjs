@@ -2,7 +2,7 @@ const { chromium }=require('playwright');
 const assert=require('node:assert/strict');
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
- const page=await browser.newPage({viewport:{width:1100,height:950}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await browser.newPage({viewport:{width:1100,height:950}});const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('Browser error:',e.message)});
  await page.goto('http://127.0.0.1:8765/?test');
  const results=await page.evaluate(()=>{
  const R=window.ChipRules,out=[];const check=(name,fn)=>{if(!fn())throw Error(name);out.push(name)};
@@ -14,7 +14,7 @@ const assert=require('node:assert/strict');
  });
  const rect=await page.locator('canvas').boundingBox();const pos=(x,y)=>({x:rect.x+x/450*rect.width,y:rect.y+y/800*rect.height});
  let a=pos(89,694),b=pos(149,231);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:12});
- assert(await page.evaluate(()=>ChipStackDebug.game.drag.moving));await page.mouse.up();await page.waitForFunction(()=>!ChipStackDebug.game.busy);
+ assert(await page.evaluate(()=>ChipStackDebug.game.drag.moving));await page.mouse.up();assert(await page.evaluate(()=>ChipStackDebug.game.flight?.type==='place'),'placement animation');await page.waitForFunction(()=>!ChipStackDebug.game.busy);
  assert.equal(await page.evaluate(()=>ChipStackDebug.game.score),225);
  const events=await page.evaluate(()=>window.events);for(const k of ['pick','place','merge','clear'])assert(events.includes(k),k);
  assert.equal(await page.evaluate(()=>ChipStackDebug.game.combo),2);

@@ -304,17 +304,17 @@ function drawTray(){
 function drawEffects(){
  const f=game.flight;
  if(f){
-  const progress=clamp((clock-f.start)/f.duration,0,1),samples=Math.min(f.caps.length,9);
+  const progress=clamp((clock-f.start)/f.duration,0,1),samples=Math.min(f.chips.length,9);
   for(let j=0;j<samples;j++){
-   const fraction=samples===1?0:j/(samples-1),index=Math.round(fraction*(f.caps.length-1));
+   const fraction=samples===1?0:j/(samples-1),index=Math.round(fraction*(f.chips.length-1));
    const stagger=reduced?0:fraction*.22,t=clamp((progress-stagger)/(1-stagger),0,1),e=ease(t),lift=reduced?0:Math.sin(t*Math.PI)*30;
-   const sy=f.fromPoint.y-depth(f.sourceCount)*(f.sourceCount-f.caps.length+index)/Math.max(1,f.sourceCount-1)*f.sourceScale;
+   const sy=f.fromPoint.y-depth(f.sourceCount)*(f.sourceCount-f.chips.length+index)/Math.max(1,f.sourceCount-1)*f.sourceScale;
    const ty=f.toPoint.y-depth(f.targetCount)*(f.beforeTarget.length+index)/Math.max(1,f.targetCount-1)*BOARD_SCALE;
    const x=lerp(f.fromPoint.x,f.toPoint.x,e),y=lerp(sy,ty,e)-lift;
    if(!reduced&&t>.05&&t<.95){ctx.save();ctx.globalAlpha=Math.sin(t*Math.PI)*.2;ctx.strokeStyle=CHIP_TYPES[f.chips[index]].light;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-(f.toPoint.x-f.fromPoint.x)*.09,y-(ty-sy)*.09+4);ctx.lineTo(x,y);ctx.stroke();ctx.restore();}
    drawChip(x,y,f.chips[index],1,lerp(f.sourceScale,BOARD_SCALE,e)+(reduced?0:Math.sin(t*Math.PI)*.07),reduced?0:Math.sin(t*Math.PI)*.09);
   }
-  if(f.caps.length>9){text(ctx,`+${f.caps.length}`,lerp(f.fromPoint.x,f.toPoint.x,ease(progress)),lerp(f.fromPoint.y,f.toPoint.y,ease(progress))-42,12,'#ffe3ac','800');}
+  if(f.chips.length>9){text(ctx,`+${f.chips.length}`,lerp(f.fromPoint.x,f.toPoint.x,ease(progress)),lerp(f.fromPoint.y,f.toPoint.y,ease(progress))-42,12,'#ffe3ac','800');}
  }
  if(game.burn){
   const b=game.burn,p=center(b.index),t=clamp((clock-b.at)/b.life,0,1);
@@ -346,12 +346,12 @@ function wait(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 function impact(power){if(!reduced)game.shake={at:performance.now(),life:230+power*18,power:Math.min(6,power)};}
 async function fly(event,token=roundToken){
  const a=event.type==='place'?{x:trayCenters[event.trayIndex],y:trayY}:center(event.from),b=center(event.to);
- const sourceCount=event.type==='place'?event.caps.length:event.beforeSource.length;
- const flight={...event,fromPoint:a,toPoint:b,sourceCount,targetCount:event.beforeTarget.length+event.caps.length,sourceScale:event.type==='place'?1:BOARD_SCALE,start:performance.now(),duration:reduced?30:Math.min(410,240+Math.log2(event.caps.length+1)*32)};
+ const sourceCount=event.type==='place'?event.chips.length:event.beforeSource.length;
+ const flight={...event,fromPoint:a,toPoint:b,sourceCount,targetCount:event.beforeTarget.length+event.chips.length,sourceScale:event.type==='place'?1:BOARD_SCALE,start:performance.now(),duration:reduced?30:Math.min(410,240+Math.log2(event.chips.length+1)*32)};
  game.flight=flight;await wait(flight.duration);if(token!==roundToken)return;
  game.flight=null;
- game.bounces.set(event.to,{at:performance.now(),strength:Math.min(.22,.1+event.caps.length*.006)});
- sound(event.type==='place'?'place':'land',game.transfers*.35+game.combo,event.caps.length,event.to);
+ game.bounces.set(event.to,{at:performance.now(),strength:Math.min(.22,.1+event.chips.length*.006)});
+ sound(event.type==='place'?'place':'land',game.transfers*.35+game.combo,event.chips.length,event.to);
  if(event.type==='merge'&&flight.targetCount>=8)impact(1.3+Math.min(2,flight.targetCount/14));
  game.pulses.push({x:b.x,y:topY(b.y,game.board[event.to].length),at:performance.now(),life:260,radius:23,color:CHIP_TYPES[event.chips[0]].light});
 }
@@ -380,7 +380,7 @@ async function place(index){
  await fly({type:'place',trayIndex:ti,to:index,chips:stack,beforeTarget:[]},token);if(token!==roundToken)return false;
  for(const event of ChipRules.resolve(game.board,index)){
   if(event.type==='merge'){
-   game.transfers++;sound('merge',game.combo+game.transfers*.45,event.caps.length,event.to);await fly(event,token);if(token!==roundToken)return false;
+   game.transfers++;sound('merge',game.combo+game.transfers*.45,event.chips.length,event.to);await fly(event,token);if(token!==roundToken)return false;
   }else{
    game.combo++;
    game.burn={...event,at:performance.now(),life:reduced?30:180};
