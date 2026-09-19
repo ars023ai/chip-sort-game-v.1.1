@@ -22,4 +22,7 @@ Warm wooden table, pale physical board, dark tray, original fictional drink labe
 - Browser regression: install Playwright, serve the root on port 8765, then run `node tests/regression.cjs`. Tests mouse drag, tap, Chromium touch input, combo scoring and sound triggers. Screenshots are generated in the temporary directory.
 - GitHub Actions runs both suites and saves desktop/mobile screenshots.
 
-No build step, remote fonts, paid services or game assets are required. Browser test tooling is development-only. Target session duration and real-device touch feel need playtesting.
+No build step, remote fonts or paid services are required. The bundled `assets/tabletop.svg` supplies the table texture and decorative objects. Browser test tooling is development-only. Target session duration and real-device touch feel need playtesting.
+
+## Reference visual pass
+The core rules are unchanged. The desktop scene now uses a side-mounted dimensional wordmark, dark HUD panels, a bevelled cream board, a brushed-metal tray, and original enamel crown-cap artwork with fluted skirts. Every cap layer uses the same physical rendering. Mobile keeps the board and next stacks in the main viewport, with decorative side objects hidden.
