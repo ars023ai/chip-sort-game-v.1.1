@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ddbd94">
+<title>Cap Stack Sort — Playtest v0.6</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#caa274}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="game" src="playtest-v04.html" title="Cap Stack Sort v0.6"></iframe>
+<script>
+const frame=document.getElementById('game');
+frame.addEventListener('load',()=>{
+ const d=frame.contentDocument,w=frame.contentWindow;
+ const style=d.createElement('style');
+ style.textContent=`
+ .collector-hud .bottle{display:none!important}
+ .collector-hud{height:76px!important;display:flex!important;align-items:flex-end!important;justify-content:center!important;filter:none!important}
+ .collector-score{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;z-index:8!important}
+ .collector-score.v06-hit{animation:v06ScoreHit .24s cubic-bezier(.2,.8,.2,1)!important}
+ .v06-fly{position:fixed!important;z-index:999!important;pointer-events:none!important;margin:0!important;will-change:transform,opacity!important;filter:drop-shadow(0 6px 6px #0005)}
+ .v06-plus{position:fixed;z-index:1000;pointer-events:none;color:#ffe36a;font-weight:1000;font-size:16px;text-shadow:0 2px 5px #24170d;transform:translate(-50%,-50%);animation:v06Plus .42s ease-out forwards}
+ @keyframes v06ScoreHit{0%{transform:scale(1)}42%{transform:scale(1.095)}100%{transform:scale(1)}}
+ @keyframes v06Plus{0%{opacity:0;transform:translate(-50%,-25%) scale(.8)}25%{opacity:1;transform:translate(-50%,-55%) scale(1.08)}100%{opacity:0;transform:translate(-50%,-115%) scale(.95)}}
+ @media(max-width:500px){.collector-hud{height:56px!important}}
+ `;
+ d.head.appendChild(style);
+ const helpLabel=d.querySelector('#helpOverlay .stat-label');if(helpLabel)helpLabel.textContent='PLAYTEST v0.6';
+ const paras=d.querySelectorAll('#helpOverlay p');if(paras[1])paras[1].innerHTML='When a group reaches <b>10 or more</b>, its caps fly smoothly into SCORE. Each arriving cap shrinks away and adds an increasing reward: +10, +20, +30…';
+ const patch=d.createElement('script');
+ patch.textContent=`
+ function v06ScoreTarget(){const el=document.querySelector('.collector-score')||document.querySelector('.score-num');const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,el};}
+ function v06Plus(x,y,n){const el=document.createElement('div');el.className='v06-plus';el.textContent='+'+n;el.style.left=x+'px';el.style.top=y+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),450);}
+ function v06Fly(el,target,order){return new Promise(resolve=>{const r=el.getBoundingClientRect(),clone=el.cloneNode(true);clone.classList.add('v06-fly');clone.style.left=r.left+'px';clone.style.top=r.top+'px';clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.transform='none';document.body.appendChild(clone);el.style.visibility='hidden';const sx=r.left+r.width/2,sy=r.top+r.height/2,dx=target.x-sx,dy=target.y-sy,dur=430+Math.min(order*12,90),lift=Math.min(95,Math.max(45,Math.abs(dx)*.12));const t0=performance.now();function f(now){const t=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-t,3),arc=-4*lift*t*(1-t),scale=1-.76*e,rot=(order%2?1:-1)*95*e;clone.style.transform='translate('+dx*e+'px,'+(dy*e+arc)+'px) scale('+scale+') rotate('+rot+'deg)';clone.style.opacity=String(t<.82?1:1-(t-.82)/.18);if(t<1)requestAnimationFrame(f);else{clone.remove();resolve();}}requestAnimationFrame(f);});}
+ clearTop=async function(index,count,comboNo){
+  game.combo=comboNo;game.chargeIndex=index;render();await wait(110);
+  const mult=1+.25*(comboNo-1),baseScore=game.score;let earned=0;const target=v06ScoreTarget();
+  for(let k=0;k<count;k++){
+   const cell=$$('#grid .cell')[index],caps=cell.querySelectorAll('.cap'),top=caps[caps.length-1];
+   if(top)await v06Fly(top,target,k);
+   const s=game.board[index];if(s.length)s.pop();renderBoard();game.chargeIndex=index;
+   const step=10*(k+1);earned+=step;game.score=baseScore+Math.round(earned*mult);saveBest();renderHUD();
+   const fresh=v06ScoreTarget();fresh.el?.classList.remove('v06-hit');void fresh.el?.offsetWidth;fresh.el?.classList.add('v06-hit');v06Plus(fresh.x,fresh.y-18,Math.round(step*mult));
+   try{sfx('merge',Math.min(k,5));}catch(e){};try{vibrate(k===count-1?8:3)}catch(e){};
+   await wait(55);
+  }
+  game.chargeIndex=-1;game.cleared+=count;game.maxCombo=Math.max(game.maxCombo,comboNo);render();
+  try{sfx('reward',0,comboNo)}catch(e){};
+  await wait(180);
+ };
+ try{localStorage.setItem('cap-playtest-v06-ready','1')}catch(e){}
+ `;
+ d.body.appendChild(patch);
+});
+</script>
+</body>
+</html>
