@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ddbd94">
+<title>Cap Stack Sort — Playtest v0.5</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#caa274}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="game" src="playtest-v04.html" title="Cap Stack Sort v0.5"></iframe>
+<script>
+const frame=document.getElementById('game');
+frame.addEventListener('load',()=>{
+ const d=frame.contentDocument,w=frame.contentWindow;
+ const style=d.createElement('style');
+ style.textContent=`
+  .hud{grid-template-columns:1fr 132px 1fr!important;align-items:end!important}
+  .collector-hud{height:76px!important;filter:none!important;display:flex!important;align-items:flex-end!important;justify-content:center!important}
+  .collector-hud .bottle{display:none!important}
+  .collector-score{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;min-width:128px!important}
+  .collector-hud.hit .collector-score,.collector-hud.reward .collector-score{animation:score-tick .24s ease!important}
+  .cell.clear-charge{box-shadow:inset 0 1px 3px #8d765438,0 0 0 2px #ffe1a0cc,0 0 25px #ffc95d75!important}
+  .cell.clear-snap{animation:v05snap .20s cubic-bezier(.2,.8,.2,1)!important}
+  .cap.v05-collapse{z-index:20!important;will-change:transform,opacity,filter!important}
+  .v05-reward{position:fixed;z-index:120;pointer-events:none;color:#fff1bf;font-weight:1000;font-size:18px;text-shadow:0 2px 5px #3a2418;transform:translate(-50%,-50%);animation:v05reward .82s ease forwards}
+  @keyframes v05snap{0%{transform:scale(1)}35%{transform:scale(.965)}70%{transform:scale(1.025)}100%{transform:scale(1)}}
+  @keyframes v05reward{0%{opacity:0;transform:translate(-50%,-35%) scale(.82)}18%{opacity:1;transform:translate(-50%,-55%) scale(1.08)}72%{opacity:1}100%{opacity:0;transform:translate(-50%,-125%) scale(.98)}}
+  @media(max-width:500px){.hud{grid-template-columns:.8fr 104px 1.2fr!important}.collector-hud{height:56px!important}.collector-score{min-width:96px!important}}
+ `;
+ d.head.appendChild(style);
+ const oldLabel=d.querySelector('.collector-hud'); if(oldLabel) oldLabel.setAttribute('aria-label','Score');
+ const helpLabel=d.querySelector('#helpOverlay .stat-label'); if(helpLabel) helpLabel.textContent='PLAYTEST v0.5';
+ const paras=d.querySelectorAll('#helpOverlay p'); if(paras[1]) paras[1].innerHTML='When a group reaches <b>10 or more</b>, it clears directly on the board: the stack compresses cap-by-cap, finishes with a tactile snap, then awards the score. Nothing flies away from the play area.';
+ const patch=d.createElement('script');
+ patch.textContent=`
+  function v05CellCenter(index){const r=$$('#grid .cell')[index].getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.58};}
+  function v05Reward(index,label){const p=v05CellCenter(index),el=document.createElement('div');el.className='v05-reward';el.textContent=label;el.style.left=p.x+'px';el.style.top=p.y+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),850);}
+  function v05Collapse(el,k,count){return new Promise(resolve=>{const dur=175,delay=Math.min(26,k*2),t0=performance.now()+delay;function f(now){if(now<t0){requestAnimationFrame(f);return;}const t=clamp((now-t0)/dur,0,1),e=ease(t),s=1-.22*e,y=5*e;el.style.transform='translateY('+y+'px) scale('+s+')';el.style.opacity=String(1-.82*e);el.style.filter='brightness('+(1+.14*Math.sin(t*Math.PI))+')';if(t<1)requestAnimationFrame(f);else resolve();}requestAnimationFrame(f);});}
+  clearTop=async function(index,count,comboNo){
+   game.combo=comboNo;game.chargeIndex=index;render();
+   const cell=$$('#grid .cell')[index];cell.classList.add('clear-charge');sfx('charge');await wait(155);
+   const mult=1+.25*(comboNo-1),totalPoints=Math.round(count*10*mult),baseScore=game.score;
+   for(let k=0;k<count;k++){
+    const caps=cell.querySelectorAll('.cap');const top=caps[caps.length-1];
+    if(top){top.classList.add('v05-collapse');sfx('merge',Math.min(k,5));await v05Collapse(top,k,count);}
+    const s=game.board[index];if(s.length)s.pop();renderBoard();game.chargeIndex=index;
+    if(k<count-1)await wait(42);
+   }
+   game.chargeIndex=-1;game.cleared+=count;game.maxCombo=Math.max(game.maxCombo,comboNo);
+   render();const c=$$('#grid .cell')[index];c.classList.add('clear-snap');
+   await wait(55);sfx('reward',0,comboNo);vibrate(comboNo>1?[7,18,9]:9);
+   game.score=baseScore+totalPoints;saveBest();renderHUD();
+   const scoreBox=$('.collector-score');scoreBox?.classList.add('bump');setTimeout(()=>scoreBox?.classList.remove('bump'),300);
+   v05Reward(index,comboNo>1?'COMBO x'+comboNo+' · +'+totalPoints:'CLEAR · +'+totalPoints);
+   await wait(245);
+  };
+  try{localStorage.setItem('cap-playtest-v05-ready','1')}catch(e){}
+ `;
+ d.body.appendChild(patch);
+});
+</script>
+</body>
+</html>
