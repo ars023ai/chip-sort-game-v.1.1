@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d8b187">
+<title>Cap Stack Sort — Full Playtest v0.8</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#caa274}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="game" src="playtest-v04.html" title="Cap Stack Sort Full Playtest v0.8"></iframe>
+<script>
+const frame=document.getElementById('game');
+frame.addEventListener('load',()=>{
+ const d=frame.contentDocument;
+ const style=d.createElement('style');
+ style.textContent=`
+ :root{--cap:66px;--cell-h:82px;--gap:7px}
+ body{background-color:#d1a678!important;background-position:center!important}
+ .scene{width:min(1360px,97vw)!important;grid-template-columns:minmax(175px,1fr) minmax(500px,650px) minmax(175px,1fr)!important;gap:24px!important}
+ .game-shell{max-width:650px;margin:auto}
+ .hud{grid-template-columns:1.08fr .86fr .78fr .96fr!important;gap:8px!important;margin-bottom:10px!important;align-items:stretch!important}
+ .collector-hud{order:1!important;height:74px!important;display:flex!important;align-items:center!important;justify-content:center!important;filter:none!important;background:linear-gradient(145deg,#45484a,#292d2e)!important;border:1px solid #9c9a95!important;border-radius:10px!important;box-shadow:0 5px 10px #5338232f,inset 0 1px #ffffff35!important}
+ .collector-hud .bottle{display:none!important}
+ .collector-score{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;min-width:0!important;text-align:center!important}
+ .collector-score span{display:block!important;font-size:12px!important;color:#d7d4cd!important;letter-spacing:.12em!important;font-weight:800!important;line-height:1.1!important}
+ .collector-score b{display:block!important;font-size:32px!important;color:#ffe14a!important;font-weight:1000!important;line-height:1.05!important;margin-top:2px!important}
+ .best-card{order:2!important;height:74px!important;border-radius:10px!important}
+ .stats-card{display:contents!important}
+ .stats-card>div{height:74px!important;background:linear-gradient(145deg,#45484a,#292d2e)!important;border:1px solid #9c9a95!important;border-radius:10px!important;box-shadow:0 5px 10px #5338232f,inset 0 1px #ffffff35!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;color:#fff!important}
+ .stats-card>div:nth-child(1){order:3!important}.stats-card>div:nth-child(2){order:4!important}.stats-card>div:nth-child(3){display:none!important}
+ .stats-card>div b{font-size:22px!important;line-height:1.05!important}.stats-card>div:nth-child(1) b{color:#ff921f!important}
+ .board{padding:15px 13px 13px!important;border-radius:28px!important;background:linear-gradient(145deg,#f0dec4,#d7c3a6 58%,#eee0c8)!important;border:2px solid #f8ecdc!important;box-shadow:0 15px 24px #5a3d2845,inset 0 0 0 2px #b99e7e,inset 0 0 0 8px #e7d4ba!important}
+ .grid{grid-template-columns:repeat(5,1fr)!important;grid-template-rows:repeat(6,var(--cell-h))!important;gap:var(--gap)!important}
+ .cell{border-radius:13px!important;background:linear-gradient(145deg,#dccbb4,#eadcc7)!important;border:1px solid #eadbc6!important;box-shadow:inset 0 1px 2px #8d76542a,0 1px 0 #fff8!important}
+ .cell.empty::after{content:''!important}
+ .stack{width:var(--cap)!important;height:calc(var(--cap) + 36px)!important;bottom:5px!important}
+ .cap{width:var(--cap)!important;height:var(--cap)!important;border:0!important;border-radius:50%!important;background-color:transparent!important;background-image:url('assets/cap-sprite-v08.webp')!important;background-size:500% 400%!important;background-repeat:no-repeat!important;box-shadow:none!important;filter:drop-shadow(0 3px 2px #2c1b1055)!important}
+ .cap::before,.cap::after{display:none!important}.cap .mark{display:none!important}
+ .cap[data-brand="0"]{background-position:0% 0%!important}.cap[data-brand="1"]{background-position:25% 0%!important}.cap[data-brand="2"]{background-position:50% 0%!important}.cap[data-brand="3"]{background-position:75% 0%!important}.cap[data-brand="4"]{background-position:100% 0%!important}
+ .cap[data-brand="5"]{background-position:0% 33.333%!important}.cap[data-brand="6"]{background-position:25% 33.333%!important}.cap[data-brand="7"]{background-position:50% 33.333%!important}.cap[data-brand="8"]{background-position:75% 33.333%!important}.cap[data-brand="9"]{background-position:100% 33.333%!important}
+ .cap[data-brand="10"]{background-position:0% 66.667%!important}.cap[data-brand="11"]{background-position:25% 66.667%!important}.cap[data-brand="12"]{background-position:50% 66.667%!important}.cap[data-brand="13"]{background-position:75% 66.667%!important}.cap[data-brand="14"]{background-position:100% 66.667%!important}
+ .cap[data-brand="15"]{background-position:0% 100%!important}
+ .tray-wrap{width:96%!important;margin-top:10px!important;grid-template-columns:1fr 118px!important}.tray{height:108px!important;background:linear-gradient(#3d4142,#202425)!important;border:7px solid #c9bba6!important;border-radius:20px 0 0 20px!important;box-shadow:0 8px 12px #5b3a2440,inset 0 0 0 2px #f4ebdc!important}.tray-label{background:#d8c5a8!important;border-color:#c4aa87!important}
+ .progress{display:none!important}.toolbar{height:0!important;margin:0!important}
+ #help{position:fixed!important;top:22px!important;right:24px!important;z-index:55!important;width:52px!important;height:52px!important;min-width:52px!important;padding:0!important;border-radius:11px!important;background:linear-gradient(#505455,#2e3233)!important;border:1px solid #a7a59f!important;box-shadow:0 5px 12px #3a291e55!important;font-size:0!important}
+ #help::before{content:'⚙';font-size:29px;color:#e7e7e5}
+ .ars{width:88px!important;height:88px!important;border:0!important;font-size:0!important;background-image:url('assets/cap-sprite-v08.webp')!important;background-size:500% 400%!important;background-position:25% 100%!important;background-repeat:no-repeat!important;box-shadow:none!important;filter:drop-shadow(0 8px 8px #3e2d234d)!important}
+ .side:first-of-type::before{content:'OPEN\A MORE\A FUN';white-space:pre;display:grid;place-items:center;width:74px;height:152px;margin:0 auto -20px;border-radius:18px;background:linear-gradient(145deg,#d9d8d3,#8e9496);border:2px solid #73797b;box-shadow:0 8px 12px #50372144;color:#5f6262;font-weight:900;text-align:center;line-height:1.3;transform:translateX(-50px) rotate(-13deg)}
+ .side:first-of-type::after{content:'';display:block;width:82px;height:82px;margin:-10px auto 0;background-image:url('assets/cap-sprite-v08.webp');background-size:500% 400%;background-position:0% 0%;background-repeat:no-repeat;filter:drop-shadow(0 7px 7px #44261655);transform:translateX(-64px) rotate(-7deg)}
+ .collector-score.v08-hit{animation:v08ScoreHit .16s cubic-bezier(.2,.8,.2,1)!important}.v08-fly{position:fixed!important;z-index:999!important;pointer-events:none!important;margin:0!important;will-change:transform,opacity!important;filter:drop-shadow(0 4px 4px #0004)!important}
+ @keyframes v08ScoreHit{0%{transform:scale(1)}42%{transform:scale(1.06)}100%{transform:scale(1)}}
+ @media(max-width:900px){:root{--cap:54px;--cell-h:65px;--gap:5px}.scene{display:block!important;width:min(100vw,570px)!important}.game-shell{max-width:none!important;padding:5px!important}.hud{grid-template-columns:1.08fr .82fr .76fr .92fr!important;gap:5px!important;margin-top:3px!important}.collector-hud,.best-card,.stats-card>div{height:58px!important}.collector-score b{font-size:25px!important}.best-num{font-size:23px!important}.stats-card>div b{font-size:17px!important}.board{padding:10px 9px 9px!important;border-radius:21px!important}.tray{height:91px!important}.tray-wrap{grid-template-columns:1fr 98px!important}#help{top:8px!important;right:8px!important;width:42px!important;height:42px!important;min-width:42px!important}#help::before{font-size:24px}}
+ @media(max-width:500px){:root{--cap:47px;--cell-h:57px;--gap:4px}.collector-score span,.stat-label{font-size:9px!important}.collector-score b{font-size:22px!important}.best-num{font-size:20px!important}.stats-card>div b{font-size:15px!important}.tray{height:82px!important}.tray-wrap{grid-template-columns:1fr 88px!important}}
+ `;
+ d.head.appendChild(style);
+ try{BRANDS[6].name='RED BULL';}catch(e){}
+ const help=d.getElementById('help');if(help){help.textContent='';help.setAttribute('aria-label','Settings and how to play');}
+ const label=d.querySelector('#helpOverlay .stat-label');if(label)label.textContent='FULL PLAYTEST v0.8';
+ const h2=d.querySelector('#helpOverlay h2');if(h2)h2.textContent='Settings / How to Play';
+ const paras=d.querySelectorAll('#helpOverlay p');
+ if(paras[0])paras[0].innerHTML='Drag a NEXT STACK onto an empty cell, or tap a stack and then tap a cell. Matching top caps merge <b>one by one</b>. A top group of <b>10 or more</b> clears completely while buried colors remain.';
+ if(paras[1])paras[1].innerHTML='Clear uses the approved v0.7 motion: caps leave the stack <b>one by one</b>, travel toward SCORE in a clean staircase, and shrink gradually. Score and Combo balancing are still playtest values.';
+ const patch=d.createElement('script');
+ patch.textContent=`
+ function v08ScoreTarget(){const el=document.querySelector('.collector-score')||document.querySelector('.score-num');const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,el};}
+ function v08StartFlight(el,target,order){const r=el.getBoundingClientRect(),clone=el.cloneNode(true);clone.classList.add('v08-fly');clone.style.left=r.left+'px';clone.style.top=r.top+'px';clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.transform='none';document.body.appendChild(clone);const sx=r.left+r.width/2,sy=r.top+r.height/2,dx=target.x-sx,dy=target.y-sy,dist=Math.hypot(dx,dy),dur=Math.max(560,Math.min(820,dist/0.52)),rot=(order%2?1:-1)*8,t0=performance.now();return new Promise(resolve=>{function f(now){const t=Math.min(1,(now-t0)/dur),x=dx*t,y=dy*t,scale=1-.72*t;clone.style.transform='translate('+x+'px,'+y+'px) scale('+scale+') rotate('+(rot*t)+'deg)';clone.style.opacity=String(t<.88?1:1-(t-.88)/.12);if(t<1)requestAnimationFrame(f);else{clone.remove();resolve();}}requestAnimationFrame(f);});}
+ clearTop=async function(index,count,comboNo){game.combo=comboNo;game.chargeIndex=index;render();await wait(70);const startScore=game.score,target=v08ScoreTarget(),flights=[];for(let k=0;k<count;k++){const cell=$$('#grid .cell')[index],caps=cell.querySelectorAll('.cap'),top=caps[caps.length-1];if(!top)break;const p=v08StartFlight(top,target,k).then(()=>{game.score=startScore+10*(k+1);saveBest();renderHUD();const fresh=v08ScoreTarget();fresh.el?.classList.remove('v08-hit');void fresh.el?.offsetWidth;fresh.el?.classList.add('v08-hit');try{sfx('merge',Math.min(k,5))}catch(e){}});flights.push(p);const s=game.board[index];if(s.length)s.pop();renderBoard();game.chargeIndex=index;if(k<count-1)await wait(108);}await Promise.all(flights);game.score=startScore+(count*10);saveBest();renderHUD();game.chargeIndex=-1;game.cleared+=count;game.maxCombo=Math.max(game.maxCombo,comboNo);render();try{sfx('reward',0,comboNo)}catch(e){};try{vibrate(8)}catch(e){};await wait(90);};
+ try{localStorage.setItem('cap-full-playtest-v08-ready','1')}catch(e){}
+ `;
+ d.body.appendChild(patch);
+});
+</script>
+</body></html>
