@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ddbd94">
+<title>Cap Stack Sort — Playtest v0.7</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#caa274}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head><body><iframe id="game" src="playtest-v04.html" title="Cap Stack Sort v0.7"></iframe>
+<script>
+const frame=document.getElementById('game');
+frame.addEventListener('load',()=>{const d=frame.contentDocument;
+ const style=d.createElement('style');
+ style.textContent=`
+ .collector-hud .bottle{display:none!important}
+ .collector-hud{height:76px!important;display:flex!important;align-items:flex-end!important;justify-content:center!important;filter:none!important}
+ .collector-score{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;z-index:8!important}
+ .collector-score.v07-hit{animation:v07ScoreHit .16s cubic-bezier(.2,.8,.2,1)!important}
+ .v07-fly{position:fixed!important;z-index:999!important;pointer-events:none!important;margin:0!important;will-change:transform,opacity!important;filter:drop-shadow(0 4px 4px #0004)}
+ @keyframes v07ScoreHit{0%{transform:scale(1)}42%{transform:scale(1.06)}100%{transform:scale(1)}}
+ @media(max-width:500px){.collector-hud{height:56px!important}}
+ `;
+ d.head.appendChild(style);
+ const helpLabel=d.querySelector('#helpOverlay .stat-label');if(helpLabel)helpLabel.textContent='PLAYTEST v0.7';
+ const paras=d.querySelectorAll('#helpOverlay p');if(paras[1])paras[1].innerHTML='Clear animation is matched to the reference: caps leave the stack <b>one by one</b>, follow the same straight path toward SCORE, shrink gradually, and overlap like a moving staircase.';
+ const patch=d.createElement('script');
+ patch.textContent=`
+ function v07ScoreTarget(){const el=document.querySelector('.collector-score')||document.querySelector('.score-num');const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,el};}
+ function v07StartFlight(el,target,order){
+   const r=el.getBoundingClientRect(),clone=el.cloneNode(true);clone.classList.add('v07-fly');clone.style.left=r.left+'px';clone.style.top=r.top+'px';clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.transform='none';document.body.appendChild(clone);
+   const sx=r.left+r.width/2,sy=r.top+r.height/2,dx=target.x-sx,dy=target.y-sy,dist=Math.hypot(dx,dy),dur=Math.max(560,Math.min(820,dist/0.52)),rot=(order%2?1:-1)*8,t0=performance.now();
+   return new Promise(resolve=>{function f(now){const t=Math.min(1,(now-t0)/dur),x=dx*t,y=dy*t,scale=1-.72*t;clone.style.transform='translate('+x+'px,'+y+'px) scale('+scale+') rotate('+(rot*t)+'deg)';clone.style.opacity=String(t<.88?1:1-(t-.88)/.12);if(t<1)requestAnimationFrame(f);else{clone.remove();resolve();}}requestAnimationFrame(f);});
+ }
+ clearTop=async function(index,count,comboNo){
+   game.combo=comboNo;game.chargeIndex=index;render();await wait(70);
+   const startScore=game.score,target=v07ScoreTarget(),flights=[];
+   for(let k=0;k<count;k++){
+     const cell=$$('#grid .cell')[index],caps=cell.querySelectorAll('.cap'),top=caps[caps.length-1];
+     if(!top)break;
+     const p=v07StartFlight(top,target,k).then(()=>{
+       game.score=startScore+10*(k+1);saveBest();renderHUD();const fresh=v07ScoreTarget();fresh.el?.classList.remove('v07-hit');void fresh.el?.offsetWidth;fresh.el?.classList.add('v07-hit');try{sfx('merge',Math.min(k,5))}catch(e){};
+     });
+     flights.push(p);
+     const s=game.board[index];if(s.length)s.pop();renderBoard();game.chargeIndex=index;
+     if(k<count-1)await wait(108);
+   }
+   await Promise.all(flights);
+   game.score=startScore+(count*10);saveBest();renderHUD();game.chargeIndex=-1;game.cleared+=count;game.maxCombo=Math.max(game.maxCombo,comboNo);render();try{sfx('reward',0,comboNo)}catch(e){};try{vibrate(8)}catch(e){};await wait(90);
+ };
+ try{localStorage.setItem('cap-playtest-v07-ready','1')}catch(e){}
+ `;
+ d.body.appendChild(patch);
+});
+</script></body></html>
