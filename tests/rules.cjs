@@ -1,5 +1,5 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
-const source=fs.readFileSync('index.html','utf8');const context={window:{}};vm.createContext(context);vm.runInContext(source.slice(source.indexOf('class ChipRules'),source.indexOf('/* Procedural Foley')),context);const R=context.window.ChipRules;
+const source=fs.readFileSync('full-playtest.html','utf8');const context={window:{}};vm.createContext(context);vm.runInContext(source.slice(source.indexOf('class ChipRules'),source.indexOf('/* Procedural Foley')),context);const R=context.window.ChipRules;
 const board=()=>Array.from({length:30},()=>[]);
 for(const n of [9,10,13,15]){const b=board();b[0]=Array(n).fill(1);const e=[...R.resolve(b,0)];assert.equal(b[0].length,n<10?n:0);if(n>=10)assert.equal(e[0].count,n);}
 for(const n of [10,13]){const b=board();b[0]=[0,0,0,...Array(n).fill(1)];const e=[...R.resolve(b,0)];assert.deepEqual(b[0],[0,0,0]);assert.equal(e[0].points,n*10);}
