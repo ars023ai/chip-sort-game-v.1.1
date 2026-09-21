@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#d8b187">
+<title>Cap Stack Sort — Full Playtest v0.8 Fixed</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#caa274}iframe{display:block;width:100%;height:100%;border:0}</style>
+</head>
+<body>
+<iframe id="game" src="playtest-v04.html" title="Cap Stack Sort Full Playtest v0.8 Fixed"></iframe>
+<script>
+const frame=document.getElementById('game');
+frame.addEventListener('load',()=>{
+ const d=frame.contentDocument;
+ const style=d.createElement('style');
+ style.textContent=`
+ :root{--cap:62px;--cell-h:78px;--gap:7px}
+ .scene{width:min(1360px,97vw)!important;grid-template-columns:minmax(175px,1fr) minmax(500px,650px) minmax(175px,1fr)!important;gap:24px!important}
+ .game-shell{max-width:650px;margin:auto}
+ .hud{grid-template-columns:1.08fr .86fr .78fr .96fr!important;gap:8px!important;margin-bottom:10px!important;align-items:stretch!important}
+ .collector-hud{order:1!important;height:74px!important;display:flex!important;align-items:center!important;justify-content:center!important;filter:none!important;background:linear-gradient(145deg,#45484a,#292d2e)!important;border:1px solid #9c9a95!important;border-radius:10px!important;box-shadow:0 5px 10px #5338232f,inset 0 1px #ffffff35!important}
+ .collector-hud .bottle{display:none!important}.collector-score{position:relative!important;left:auto!important;bottom:auto!important;transform:none!important;text-align:center!important}.collector-score span{display:block!important;font-size:12px!important;color:#d7d4cd!important;letter-spacing:.12em!important;font-weight:800!important}.collector-score b{display:block!important;font-size:32px!important;color:#ffe14a!important;font-weight:1000!important}
+ .best-card{order:2!important;height:74px!important;border-radius:10px!important}.stats-card{display:contents!important}.stats-card>div{height:74px!important;background:linear-gradient(145deg,#45484a,#292d2e)!important;border:1px solid #9c9a95!important;border-radius:10px!important;box-shadow:0 5px 10px #5338232f,inset 0 1px #ffffff35!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;color:#fff!important}.stats-card>div:nth-child(1){order:3!important}.stats-card>div:nth-child(2){order:4!important}.stats-card>div:nth-child(3){display:none!important}.stats-card>div:nth-child(1) b{color:#ff921f!important}
+ .board{padding:15px 13px 13px!important;border-radius:28px!important;background:linear-gradient(145deg,#f0dec4,#d7c3a6 58%,#eee0c8)!important;border:2px solid #f8ecdc!important;box-shadow:0 15px 24px #5a3d2845,inset 0 0 0 2px #b99e7e,inset 0 0 0 8px #e7d4ba!important}.grid{grid-template-columns:repeat(5,1fr)!important;grid-template-rows:repeat(6,var(--cell-h))!important;gap:var(--gap)!important}.cell{border-radius:13px!important;background:linear-gradient(145deg,#dccbb4,#eadcc7)!important;border:1px solid #eadbc6!important;box-shadow:inset 0 1px 2px #8d76542a,0 1px 0 #fff8!important}.cell.empty::after{content:''!important}
+ .stack{width:var(--cap)!important;height:calc(var(--cap) + 36px)!important;bottom:5px!important}.cap{width:var(--cap)!important;height:var(--cap)!important}.cap .mark{display:block!important}
+ .tray-wrap{width:96%!important;margin-top:10px!important;grid-template-columns:1fr 118px!important}.tray{height:108px!important;background:linear-gradient(#3d4142,#202425)!important;border:7px solid #c9bba6!important;border-radius:20px 0 0 20px!important}.tray-label{background:#d8c5a8!important;border-color:#c4aa87!important}
+ .progress{display:none!important}.toolbar{height:0!important;margin:0!important}#help{position:fixed!important;top:22px!important;right:24px!important;z-index:55!important;width:52px!important;height:52px!important;min-width:52px!important;padding:0!important;border-radius:11px!important;background:linear-gradient(#505455,#2e3233)!important;border:1px solid #a7a59f!important;font-size:0!important}#help::before{content:'⚙';font-size:29px;color:#e7e7e5}
+ .collector-score.v08-hit{animation:v08Hit .16s ease!important}.v08-fly{position:fixed!important;z-index:999!important;pointer-events:none!important;margin:0!important;will-change:transform,opacity!important}@keyframes v08Hit{50%{transform:scale(1.06)}}
+ @media(max-width:900px){:root{--cap:54px;--cell-h:65px;--gap:5px}.scene{display:block!important;width:min(100vw,570px)!important}.game-shell{max-width:none!important;padding:5px!important}.hud{gap:5px!important}.collector-hud,.best-card,.stats-card>div{height:58px!important}.board{padding:10px 9px 9px!important;border-radius:21px!important}.tray{height:91px!important}.tray-wrap{grid-template-columns:1fr 98px!important}#help{top:8px!important;right:8px!important;width:42px!important;height:42px!important;min-width:42px!important}}
+ `;
+ d.head.appendChild(style);
+ const help=d.getElementById('help');if(help){help.textContent='';help.setAttribute('aria-label','Settings and how to play')}
+ const label=d.querySelector('#helpOverlay .stat-label');if(label)label.textContent='FULL PLAYTEST v0.8';
+ const h2=d.querySelector('#helpOverlay h2');if(h2)h2.textContent='Settings / How to Play';
+ const patch=d.createElement('script');
+ patch.textContent=`
+ function v08Target(){const el=document.querySelector('.collector-score');const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,el};}
+ function v08Flight(el,target,order){const r=el.getBoundingClientRect(),clone=el.cloneNode(true);clone.classList.add('v08-fly');clone.style.left=r.left+'px';clone.style.top=r.top+'px';clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.transform='none';document.body.appendChild(clone);const sx=r.left+r.width/2,sy=r.top+r.height/2,dx=target.x-sx,dy=target.y-sy,dist=Math.hypot(dx,dy),dur=Math.max(560,Math.min(820,dist/.52)),rot=(order%2?1:-1)*8,t0=performance.now();return new Promise(resolve=>{function f(now){const t=Math.min(1,(now-t0)/dur);clone.style.transform='translate('+(dx*t)+'px,'+(dy*t)+'px) scale('+(1-.72*t)+') rotate('+(rot*t)+'deg)';clone.style.opacity=String(t<.88?1:1-(t-.88)/.12);if(t<1)requestAnimationFrame(f);else{clone.remove();resolve()}}requestAnimationFrame(f)})}
+ clearTop=async function(index,count,comboNo){game.combo=comboNo;game.chargeIndex=index;render();await wait(70);const base=game.score,target=v08Target(),flights=[];for(let k=0;k<count;k++){const cell=$$('#grid .cell')[index],caps=cell.querySelectorAll('.cap'),top=caps[caps.length-1];if(!top)break;flights.push(v08Flight(top,target,k).then(()=>{game.score=base+10*(k+1);saveBest();renderHUD();const fresh=v08Target();fresh.el.classList.remove('v08-hit');void fresh.el.offsetWidth;fresh.el.classList.add('v08-hit')}));const s=game.board[index];if(s.length)s.pop();renderBoard();if(k<count-1)await wait(108)}await Promise.all(flights);game.score=base+count*10;game.chargeIndex=-1;game.cleared+=count;game.maxCombo=Math.max(game.maxCombo,comboNo);saveBest();render();await wait(90)};
+ try{if(game.tray.every(x=>!x)){refillTray();render()}}catch(e){}
+ `;
+ d.body.appendChild(patch);
+});
+</script>
+</body></html>
